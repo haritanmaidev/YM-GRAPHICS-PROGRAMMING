@@ -17,6 +17,8 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
     m_ctx.Init(device.Get(), context.Get(), renderer);
     //bool ok = m_sceneobject.LoadSphere(m_ctx);
     bool ok = m_sceneobject.LoadGLTF(m_ctx, L"Resources\\sphere.gltf");
+	ok = m_sceneobject2.LoadGLTF(m_ctx, L"Resources\\sphere.gltf");
+
     //bool ok = m_sceneobject.LoadGLTF(m_ctx, L"Resources\\FlightHelmet.gltf");
     //bool ok = m_sceneobject.LoadGLTFWithSkeleton(m_ctx, L"Resources\\Fox.gltf");
 
@@ -100,13 +102,6 @@ void Scene::update(const float deltaTime)
     m_pImmediateContext->PSSetSamplers(0, 1, &m_pSamplerLinear);
 	
 
-
-    ConstantBuffer cb1;
-    cb1.mView = XMMatrixTranspose(getCamera()->getViewMatrix());
-    cb1.mProjection = XMMatrixTranspose(getCamera()->getProjectionMatrix());
-    cb1.vOutputColor = XMFLOAT4(0, 0, 0, 0);
-
-
     m_lightProperties.EyePosition = XMFLOAT4(m_pCamera->getPosition().x, m_pCamera->getPosition().y, m_pCamera->getPosition().z, 1);
 
     m_pImmediateContext->UpdateSubresource(m_pLightConstantBuffer.Get(), 0, nullptr, &m_lightProperties, 0, 0);
@@ -122,9 +117,12 @@ void Scene::update(const float deltaTime)
     
     m_sceneobject.RenderFrame(m_ctx, deltaTime); // renders the object
 
-	XMMATRIX world = XMMatrixTranslation(2, 0, 0);
+    // scene object 2 
+    XMMATRIX m = XMMatrixTranslation(2, 0, 0);
+    m_sceneobject2.SetMatrixToRoots(m);
 
-	cb1.mWorld = XMMatrixTranspose(world);
-    m_sceneobject.RenderFrame(m_ctx, deltaTime); // renders the object
+    m_sceneobject2.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made
+
+    m_sceneobject2.RenderFrame(m_ctx, deltaTime); // renders the object
 
 }
