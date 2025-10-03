@@ -98,31 +98,20 @@ void Scene::update(const float deltaTime)
     // note the pixel shader and the vertex shader have been set by the renderer class calling this method
     m_pImmediateContext->PSSetShaderResources(0, 1, &m_pTextureDiffuse);
     m_pImmediateContext->PSSetShaderResources(1, 1, &m_pTextureRoughness);
-
     m_pImmediateContext->PSSetSamplers(0, 1, &m_pSamplerLinear);
 	
-
     m_lightProperties.EyePosition = XMFLOAT4(m_pCamera->getPosition().x, m_pCamera->getPosition().y, m_pCamera->getPosition().z, 1);
-
     m_pImmediateContext->UpdateSubresource(m_pLightConstantBuffer.Get(), 0, nullptr, &m_lightProperties, 0, 0);
     ID3D11Buffer* buf = m_pLightConstantBuffer.Get();
     m_pImmediateContext->PSSetConstantBuffers(1, 1, &buf);
 
-	//m_pImmediateContext->UpdateSubresource(m_pLightConstantBuffer2.Get(), 0, nullptr, &m_lightProperties, 0, 0);
-	//ID3D11Buffer* buf2 = m_pLightConstantBuffer2.Get();
-	//m_pImmediateContext->PSSetConstantBuffers(1, 1, &buf2);
-
     // scene object 1 
     m_sceneobject.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made
-    
     m_sceneobject.RenderFrame(m_ctx, deltaTime); // renders the object
 
     // scene object 2 
-    XMMATRIX m = XMMatrixTranslation(2, 0, 0);
+    XMMATRIX m = XMMatrixTranslation(4, 0, 0);
     m_sceneobject2.SetMatrixToRoots(m);
-
     m_sceneobject2.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made
-
     m_sceneobject2.RenderFrame(m_ctx, deltaTime); // renders the object
-
 }

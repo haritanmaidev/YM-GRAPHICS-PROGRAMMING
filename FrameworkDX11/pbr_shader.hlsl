@@ -187,9 +187,7 @@ float4 PS_Normal(PS_INPUT IN) : SV_TARGET
 
     float4 texColor = albedoMap.Sample(samLinear, IN.Tex); 
     float4 texColor2 = roughnessMap.Sample(samLinear, IN.Tex);
-	
     texColor = lerp(texColor, texColor2, 0.25);
-    //texColor *= texColor2;
 	
     float4 diffuseColor = (ambient + diffuse + specular) * texColor;
 	
