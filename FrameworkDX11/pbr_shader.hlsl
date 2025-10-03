@@ -10,6 +10,7 @@ cbuffer ConstantBuffer : register( b0 )
 }
 
 Texture2D albedoMap : register(t0);
+Texture2D roughnessMap : register(t1);
 SamplerState samLinear : register(s0);
 
 static const float PI = 3.14159265f;
@@ -162,9 +163,9 @@ PS_INPUT VS( VS_INPUT input )
 
 float4 PS_PBR(PS_INPUT IN) : SV_TARGET
 {
-    float3 finalColour = float4(1, 0, 0, 0);
+    float4 finalColour = float4(1, 0, 0, 1);
     
-    return float4(finalColour, 1.0);
+    return float4(finalColour);
 }
 
 //--------------------------------------------------------------------------------------
@@ -185,7 +186,10 @@ float4 PS_Normal(PS_INPUT IN) : SV_TARGET
 	float4 specular = lit.Specular;
 
     float4 texColor;
-	texColor = albedoMap.Sample(samLinear, IN.Tex);
+    texColor = albedoMap.Sample(samLinear, IN.Tex);
+    float4 texColor2 = roughnessMap.Sample(samLinear, IN.Tex);
+	
+    texColor *= texColor2;
 	
     float4 diffuseColor = (ambient + diffuse + specular) * texColor;
 	

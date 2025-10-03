@@ -12,6 +12,7 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
     UINT width = rc.right - rc.left;
     UINT height = rc.bottom - rc.top;
     HRESULT hr;
+	HRESULT hr2;
 
     m_ctx.Init(device.Get(), context.Get(), renderer);
     //bool ok = m_sceneobject.LoadSphere(m_ctx);
@@ -43,8 +44,10 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
     if (FAILED(hr))
         return hr;
 
+
     // load and setup textures
     hr = CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Resources\\rusty_metal_04_diff.dds", nullptr, &m_pTextureDiffuse);
+	hr = CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Resources\\rusty_metal_04_rough.dds", nullptr, &m_pTextureRoughness);
     if (FAILED(hr))
         return hr;
 
@@ -92,7 +95,10 @@ void Scene::update(const float deltaTime)
 {
     // note the pixel shader and the vertex shader have been set by the renderer class calling this method
     m_pImmediateContext->PSSetShaderResources(0, 1, &m_pTextureDiffuse);
+    m_pImmediateContext->PSSetShaderResources(1, 1, &m_pTextureRoughness);
+
     m_pImmediateContext->PSSetSamplers(0, 1, &m_pSamplerLinear);
+	
 
 
     ConstantBuffer cb1;
@@ -107,9 +113,18 @@ void Scene::update(const float deltaTime)
     ID3D11Buffer* buf = m_pLightConstantBuffer.Get();
     m_pImmediateContext->PSSetConstantBuffers(1, 1, &buf);
 
+	//m_pImmediateContext->UpdateSubresource(m_pLightConstantBuffer2.Get(), 0, nullptr, &m_lightProperties, 0, 0);
+	//ID3D11Buffer* buf2 = m_pLightConstantBuffer2.Get();
+	//m_pImmediateContext->PSSetConstantBuffers(1, 1, &buf2);
+
     // scene object 1 
     m_sceneobject.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made
     
+    m_sceneobject.RenderFrame(m_ctx, deltaTime); // renders the object
+
+	XMMATRIX world = XMMatrixTranslation(2, 0, 0);
+
+	cb1.mWorld = XMMatrixTranspose(world);
     m_sceneobject.RenderFrame(m_ctx, deltaTime); // renders the object
 
 }
