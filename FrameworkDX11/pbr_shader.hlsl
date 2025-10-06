@@ -193,44 +193,28 @@ float4 PS_Normal(PS_INPUT IN) : SV_TARGET
     float4 diffuseColor = (ambient + diffuse + specular) * texColor;
 	
     //return diffuseColor;
-	
+}
+
+float4 PS_Toon(PS_INPUT IN) : SV_TARGET
+{
+    float4 pixelToLightVectorNormalised = normalize(Lights[0].Position - IN.worldPos);
+    float4 pixelToEyeVectorNormalised = normalize(EyePosition - IN.worldPos);
+    float distanceFromPixelToLight = length(IN.worldPos - Lights[0].Position);
+    LightingResult lit = ComputeLighting(pixelToLightVectorNormalised, pixelToEyeVectorNormalised, distanceFromPixelToLight, normalize(IN.Norm));
+    float4 ambient = GlobalAmbient;
+    float4 diffuse = lit.Diffuse;
+    float4 specular = lit.Specular;
+    float4 texColor = albedoMap.Sample(samLinear, IN.Tex);
+
 	//TOON EFFECT
     float diffuseIntensity = saturate(dot(Lights[0].Direction, IN.Norm));
-   
     if (diffuseIntensity > 0.8f) diffuseIntensity = 1.0f; // Brightest band
     else if (diffuseIntensity > 0.4f) diffuseIntensity = 0.6f; // Mid-tone band
     else diffuseIntensity = 0.2f; // Darkest band
 	
     float4 finalColor = (ambient + (Lights[0].Color * diffuseIntensity)) * float4(texColor.rgb, 1.0);
-
     return finalColor;
-
 }
-
-//float4 PS_Toon(PS_INPUT IN) : SV_TARGET
-//{
-//    float4 pixelToLightVectorNormalised = normalize(Lights[0].Position - IN.worldPos);
-//    float4 pixelToEyeVectorNormalised = normalize(EyePosition - IN.worldPos);
-//    float distanceFromPixelToLight = length(IN.worldPos - Lights[0].Position);
-//    LightingResult lit = ComputeLighting(pixelToLightVectorNormalised, pixelToEyeVectorNormalised, distanceFromPixelToLight, normalize(IN.Norm));
-//    float4 ambient = GlobalAmbient;
-//    float4 diffuse = lit.Diffuse;
-//    float4 specular = lit.Specular;
-//    float4 texColor = albedoMap.Sample(samLinear, IN.Tex);
-
-	
-//    float diffuseIntensity = saturate(dot(pixelToLightVectorNormalised, pixelToEyeVectorNormalised));
-   
-//    if (diffuseIntensity > 0.8f)
-//        diffuseIntensity = 1.0f; // Brightest band
-//    else if (diffuseIntensity > 0.4f)
-//        diffuseIntensity = 0.6f; // Mid-tone band
-//    else
-//        diffuseIntensity = 0.2f; // Darkest band
-
-//    float4 finalColor = (ambient + (Lights[1].Color * diffuseIntensity)) * texColor.rgb;
-//    return finalColor;
-//}
 
 //--------------------------------------------------------------------------------------
 // PSSolid - render a solid color
