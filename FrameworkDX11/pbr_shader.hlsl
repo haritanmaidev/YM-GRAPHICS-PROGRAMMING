@@ -86,7 +86,8 @@ float4 DoSpecular(Light lightObject, float3 pixelToEyeVectorNormalised, float3 p
         float3 reflection = reflect(-pixelToLightVectorNormalised, Normal);
         specular = pow(saturate(dot(reflection, pixelToEyeVectorNormalised)), 4); // 32 = specular power Material.SpecularPower
     }
-
+	
+    //return specular * 200;
 	return specular;
 }
 
@@ -177,22 +178,59 @@ float4 PS_Normal(PS_INPUT IN) : SV_TARGET
     float4 pixelToLightVectorNormalised = normalize(Lights[0].Position - IN.worldPos);
     float4 pixelToEyeVectorNormalised = normalize(EyePosition - IN.worldPos);
     float distanceFromPixelToLight = length(IN.worldPos - Lights[0].Position);
-	
     LightingResult lit = ComputeLighting(pixelToLightVectorNormalised, pixelToEyeVectorNormalised, distanceFromPixelToLight, normalize(IN.Norm));
 
 	// NOTE we aren't using any material properties just yet. 
     float4 ambient = GlobalAmbient;  
 	float4 diffuse = lit.Diffuse;
 	float4 specular = lit.Specular;
-
-    float4 texColor = albedoMap.Sample(samLinear, IN.Tex); 
+	
+    //float2 mirroredCoords = float2(1 - IN.Tex.x, IN.Tex.y);
+    float4 texColor = albedoMap.Sample(samLinear, IN.Tex);
     float4 texColor2 = roughnessMap.Sample(samLinear, IN.Tex);
     texColor = lerp(texColor, texColor2, 0.25);
 	
     float4 diffuseColor = (ambient + diffuse + specular) * texColor;
 	
-	return diffuseColor;
+    //return diffuseColor;
+	
+	//TOON EFFECT
+    float diffuseIntensity = saturate(dot(Lights[0].Direction, IN.Norm));
+   
+    if (diffuseIntensity > 0.8f) diffuseIntensity = 1.0f; // Brightest band
+    else if (diffuseIntensity > 0.4f) diffuseIntensity = 0.6f; // Mid-tone band
+    else diffuseIntensity = 0.2f; // Darkest band
+	
+    float4 finalColor = (ambient + (Lights[0].Color * diffuseIntensity)) * float4(texColor.rgb, 1.0);
+
+    return finalColor;
+
 }
+
+//float4 PS_Toon(PS_INPUT IN) : SV_TARGET
+//{
+//    float4 pixelToLightVectorNormalised = normalize(Lights[0].Position - IN.worldPos);
+//    float4 pixelToEyeVectorNormalised = normalize(EyePosition - IN.worldPos);
+//    float distanceFromPixelToLight = length(IN.worldPos - Lights[0].Position);
+//    LightingResult lit = ComputeLighting(pixelToLightVectorNormalised, pixelToEyeVectorNormalised, distanceFromPixelToLight, normalize(IN.Norm));
+//    float4 ambient = GlobalAmbient;
+//    float4 diffuse = lit.Diffuse;
+//    float4 specular = lit.Specular;
+//    float4 texColor = albedoMap.Sample(samLinear, IN.Tex);
+
+	
+//    float diffuseIntensity = saturate(dot(pixelToLightVectorNormalised, pixelToEyeVectorNormalised));
+   
+//    if (diffuseIntensity > 0.8f)
+//        diffuseIntensity = 1.0f; // Brightest band
+//    else if (diffuseIntensity > 0.4f)
+//        diffuseIntensity = 0.6f; // Mid-tone band
+//    else
+//        diffuseIntensity = 0.2f; // Darkest band
+
+//    float4 finalColor = (ambient + (Lights[1].Color * diffuseIntensity)) * texColor.rgb;
+//    return finalColor;
+//}
 
 //--------------------------------------------------------------------------------------
 // PSSolid - render a solid color
