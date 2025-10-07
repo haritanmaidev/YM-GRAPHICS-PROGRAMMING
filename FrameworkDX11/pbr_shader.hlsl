@@ -177,9 +177,10 @@ float G_sub(float3 N, float3 V, float k)
 float4 PS_PBR(PS_INPUT IN) : SV_TARGET
 {
     float4 finalColour = float4(1, 0, 0, 1);
+	
     float3 albedo = float3(0.3, 0.3, 0.3);
-    float metallic = 0.2f;
-    float roughness = 0.1f;
+    float metallic = 1.0f;
+    float roughness = 0.5f;
 	
 	//STEP 1: Calculate vectors
     float3 N = IN.Norm;
@@ -191,26 +192,28 @@ float4 PS_PBR(PS_INPUT IN) : SV_TARGET
 	
 	//STEP 2: Fresnel
 	//Calculating Fresnel F0 where F0 = Constant in Dielectrics. For metals, its albedo.
+	//Calculating  Fresnel-Schlick's Approximation Function where F = Fsch 
     float3 F0 = float3(0.04, 0.04, 0.04);
     F0 = lerp(F0, albedo, metallic);
-	
-	//Calculate Fresnel-Schlick's Approximation Function - F = Fsch 
     float3 F = F0 + (1 - F0) * pow(1 - cosTheta, 5); 
     //return float4(F, 1.0);
 	
 	//STEP 3: Specular BRDF
-	//Normal Distribution Function
-    float NDF = CalculateNDF(roughness, N, H);
+    float D = CalculateNDF(roughness, N, H); //Normal Distribution Function
     //return float4(NDF, NDF, NDF, 1.0);
 	
-	//Geometry Function
-    float k = pow(roughness + 1, 2) / 8;
+    float k = pow(roughness + 1, 2) / 8; //Geometry Function v
     float G = G_sub(L, N, roughness) * G_sub(V, N, roughness);
-    return float4(G, G, G, 1.0);
+    //return float4(G, G, G, 1.0);
 	
+    float3 SpecularBRDF = D * G * F / (4 * dot(N, L) * dot(N, V)); //Calculate Specular BRDF
+    return float4(SpecularBRDF, 1.0);
 	
+	//STEP 4: Diffuse
+    float3 kD = float3(1, 1, 1) - F * (1 - metallic); //Diffuse Colour based on Fresnel term & Metallic Value
+    float3 diffuse = kD * albedo / PI;
 	
-    return float4(finalColour);
+    return float4(diffuse, 1.0);
 }
 
 //--------------------------------------------------------------------------------------
@@ -235,8 +238,15 @@ float4 PS_Normal(PS_INPUT IN) : SV_TARGET
     texColor = lerp(texColor, texColor2, 0.25);
 	
     float4 diffuseColor = (ambient + diffuse + specular) * texColor;
+    //return diffuseColor;	
 	
-    //return diffuseColor;
+	//TOON EFFECT 2 - View Based
+    float diffuseIntensity2 = dot(pixelToEyeVectorNormalised.xyz, normalize(IN.Norm));
+    if (diffuseIntensity2 > 0.8f) diffuseIntensity2 = 1.0f; // Brightest band
+    else if (diffuseIntensity2 > 0.4f) diffuseIntensity2 = 0.6f; // Mid-tone band
+    else diffuseIntensity2 = 0.2f; // Darkest band
+	
+    float4 finalColor = (ambient + (Lights[0].Color * diffuseIntensity2)) * float4(texColor.rgb, 1.0);
 	
 	//TOON EFFECT - Light Based
     //float diffuseIntensity = saturate(dot(Lights[0].Direction, diffuse));
@@ -244,15 +254,6 @@ float4 PS_Normal(PS_INPUT IN) : SV_TARGET
     //else if (diffuseIntensity > 0.4f) diffuseIntensity = 0.6f; // Mid-tone band
     //else diffuseIntensity = 0.2f; // Darkest band
     //float4 finalColor = (ambient + (Lights[0].Color * diffuseIntensity)) * float4(texColor.rgb, 1.0);
-	
-	//TOON EFFECT 2 - View Based
-    float diffuseIntensity2 = dot(pixelToEyeVectorNormalised.xyz, normalize(IN.Norm));
-	
-    if (diffuseIntensity2 > 0.8f) diffuseIntensity2 = 1.0f; // Brightest band
-    else if (diffuseIntensity2 > 0.4f) diffuseIntensity2 = 0.6f; // Mid-tone band
-    else diffuseIntensity2 = 0.2f; // Darkest band
-	
-    float4 finalColor = (ambient + (Lights[0].Color * diffuseIntensity2)) * float4(texColor.rgb, 1.0);
     return finalColor;
 }
 
