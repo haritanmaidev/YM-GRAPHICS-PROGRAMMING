@@ -166,7 +166,7 @@ PS_INPUT VS( VS_INPUT input )
 float CalculateNDF(float roughness, float3 N, float3 H)
 {
     float roughnessSquare = roughness * roughness;
-    return roughnessSquare / (PI * pow(pow(dot(N, H), 2) * (roughnessSquare - 1) + 1, 2));
+    return (roughnessSquare) / (PI * (pow(pow(dot(N, H), 2) * (roughnessSquare - 1) + 1, 2)));
 }
 
 float G_sub(float3 N, float3 V, float k)
@@ -180,7 +180,10 @@ float4 PS_PBR(PS_INPUT IN) : SV_TARGET
 	
     float3 albedo = float3(0.3, 0.3, 0.3);
     float metallic = 1.0f;
-    float roughness = 0.3f;
+    float roughness = 0.1f;
+    float3 ambient = float3(0.03, 0.03, 0.03) * albedo;
+
+    //return float4(albedo, 1.0);
 	
 	//STEP 1: Calculate vectors
     float3 N = IN.Norm;
@@ -194,18 +197,25 @@ float4 PS_PBR(PS_INPUT IN) : SV_TARGET
     float3 F0 = float3(0.04, 0.04, 0.04);
     F0 = lerp(F0, albedo, metallic);
     float3 F = F0 + (1 - F0) * pow(1 - cosTheta, 5); //Fresnel-Schlick's Approximation Function where F = Fsch 
-
+	
 	//STEP 3: Specular BRDF
     float D = CalculateNDF(roughness, N, H); //Normal Distribution Function
+    //return float4(D, D, D, 1.0);
     float k = pow(roughness + 1, 2) / 8; 
     float G = G_sub(L, N, roughness) * G_sub(V, N, roughness); //Geometry Smith Function
     float3 specular = D * G * F / (4 * dot(N, L) * dot(N, V)); //Calculate Specular BRDF
-    return float4(specular, 1.0);
-	
+    //return float4(specular, 1.0)
+
 	//STEP 4: Diffuse
-    float3 kD = float3(1, 1, 1) - F * (1 - metallic); //Diffuse Colour based on Fresnel term & Metallic Value
+    float3 kD = (float3(1.0, 1.0, 1.0) - F) * (1 - metallic); //Diffuse Colour based on Fresnel term & Metallic Value
     float3 diffuse = kD * albedo / PI;
-    return float4(diffuse, 1.0);
+    //return float4(diffuse, 1.0);
+	
+	//STEP 5: Final Outgoing Light
+    float3 outgoingLight = (diffuse + specular) * NdotL;
+    finalColour = float4(float3(ambient + outgoingLight), 1.0);
+	
+    return finalColour;
 }
 
 
