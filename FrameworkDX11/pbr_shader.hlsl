@@ -211,14 +211,21 @@ float4 PS_Normal(PS_INPUT IN) : SV_TARGET
 	
     //return diffuseColor;
 	
-	//TOON EFFECT
-    float diffuseIntensity = saturate(dot(Lights[0].Direction, diffuse));
+	//TOON EFFECT - Light Based
+    //float diffuseIntensity = saturate(dot(Lights[0].Direction, diffuse));
+    //if (diffuseIntensity > 0.8f) diffuseIntensity = 1.0f; // Brightest band
+    //else if (diffuseIntensity > 0.4f) diffuseIntensity = 0.6f; // Mid-tone band
+    //else diffuseIntensity = 0.2f; // Darkest band
+    //float4 finalColor = (ambient + (Lights[0].Color * diffuseIntensity)) * float4(texColor.rgb, 1.0);
 	
-    if (diffuseIntensity > 0.8f) diffuseIntensity = 1.0f; // Brightest band
-    else if (diffuseIntensity > 0.4f) diffuseIntensity = 0.6f; // Mid-tone band
-    else diffuseIntensity = 0.2f; // Darkest band
+	//TOON EFFECT 2 - View Based
+    float diffuseIntensity2 = dot(pixelToEyeVectorNormalised.xyz, normalize(IN.Norm));
 	
-    float4 finalColor = (ambient + (Lights[0].Color * diffuseIntensity)) * float4(texColor.rgb, 1.0);
+    if (diffuseIntensity2 > 0.8f) diffuseIntensity2 = 1.0f; // Brightest band
+    else if (diffuseIntensity2 > 0.4f) diffuseIntensity2 = 0.6f; // Mid-tone band
+    else diffuseIntensity2 = 0.2f; // Darkest band
+	
+    float4 finalColor = (ambient + (Lights[0].Color * diffuseIntensity2)) * float4(texColor.rgb, 1.0);
     return finalColor;
 }
 
