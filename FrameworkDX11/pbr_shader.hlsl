@@ -169,6 +169,11 @@ float CalculateNDF(float roughness, float3 N, float3 H)
     return roughnessSquare / (PI * pow(pow(dot(N, H), 2) * (roughnessSquare - 1) + 1, 2));
 }
 
+float G_sub(float3 N, float3 V, float k)
+{
+    return dot(N, V) / (dot(N, V) * (1 - k) + k);
+}
+
 float4 PS_PBR(PS_INPUT IN) : SV_TARGET
 {
     float4 finalColour = float4(1, 0, 0, 1);
@@ -176,7 +181,7 @@ float4 PS_PBR(PS_INPUT IN) : SV_TARGET
     float metallic = 0.2f;
     float roughness = 0.1f;
 	
-	//Calculate vectors
+	//STEP 1: Calculate vectors
     float3 N = IN.Norm;
     float3 V = normalize(EyePosition - IN.worldPos); // View Direction
     float3 L = normalize(Lights[0].Position - IN.worldPos); // Light Direction
@@ -184,7 +189,7 @@ float4 PS_PBR(PS_INPUT IN) : SV_TARGET
     float cosTheta = max(dot(N, V), 0.0);
     float NdotL = max(dot(N, L), 0.0);
 	
-	//Step 2: Fresnel
+	//STEP 2: Fresnel
 	//Calculating Fresnel F0 where F0 = Constant in Dielectrics. For metals, its albedo.
     float3 F0 = float3(0.04, 0.04, 0.04);
     F0 = lerp(F0, albedo, metallic);
@@ -193,9 +198,17 @@ float4 PS_PBR(PS_INPUT IN) : SV_TARGET
     float3 F = F0 + (1 - F0) * pow(1 - cosTheta, 5); 
     //return float4(F, 1.0);
 	
-	//Step 3: Specular BRDF
+	//STEP 3: Specular BRDF
+	//Normal Distribution Function
     float NDF = CalculateNDF(roughness, N, H);
-    return float4(NDF, NDF, NDF, 1.0);
+    //return float4(NDF, NDF, NDF, 1.0);
+	
+	//Geometry Function
+    float k = pow(roughness + 1, 2) / 8;
+    float G = G_sub(L, N, roughness) * G_sub(V, N, roughness);
+    return float4(G, G, G, 1.0);
+	
+	
 	
     return float4(finalColour);
 }
