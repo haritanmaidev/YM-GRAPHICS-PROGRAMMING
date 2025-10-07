@@ -162,27 +162,41 @@ PS_INPUT VS( VS_INPUT input )
 // Pixel Shader
 //--------------------------------------------------------------------------------------
 
+//Normal Distribution Function
+float CalculateNDF(float roughness, float3 N, float3 H)
+{
+    float roughnessSquare = roughness * roughness;
+    return roughnessSquare / (PI * pow(pow(dot(N, H), 2) * (roughnessSquare - 1) + 1, 2));
+}
+
 float4 PS_PBR(PS_INPUT IN) : SV_TARGET
 {
     float4 finalColour = float4(1, 0, 0, 1);
+    float3 albedo = float3(0.3, 0.3, 0.3);
+    float metallic = 0.2f;
+    float roughness = 0.1f;
 	
-    float3 albedo = float3(1, 0, 0);
-    float metallic = 0.1f;
-    float roughness = 0.4f;
-	
-    float3 N = IN.Norm;
 	//Calculate vectors
-    float3 V = normalize(EyePosition - IN.worldPos);
-    float3 L = normalize(Lights[0].Position - IN.worldPos);
-    float3 H = normalize(V + L);
+    float3 N = IN.Norm;
+    float3 V = normalize(EyePosition - IN.worldPos); // View Direction
+    float3 L = normalize(Lights[0].Position - IN.worldPos); // Light Direction
+    float3 H = normalize(V + L); // Halfway Vector
     float cosTheta = max(dot(N, V), 0.0);
     float NdotL = max(dot(N, L), 0.0);
 	
-	//Fresnel F0 Calculation
-	//F0 = Constant in Dielectrics. For metals, its albedo.
+	//Step 2: Fresnel
+	//Calculating Fresnel F0 where F0 = Constant in Dielectrics. For metals, its albedo.
     float3 F0 = float3(0.04, 0.04, 0.04);
     F0 = lerp(F0, albedo, metallic);
-    
+	
+	//Calculate Fresnel-Schlick's Approximation Function - F = Fsch 
+    float3 F = F0 + (1 - F0) * pow(1 - cosTheta, 5); 
+    //return float4(F, 1.0);
+	
+	//Step 3: Specular BRDF
+    float NDF = CalculateNDF(roughness, N, H);
+    return float4(NDF, NDF, NDF, 1.0);
+	
     return float4(finalColour);
 }
 
