@@ -190,29 +190,21 @@ float4 PS_PBR(PS_INPUT IN) : SV_TARGET
     float cosTheta = max(dot(N, V), 0.0);
     float NdotL = max(dot(N, L), 0.0);
 	
-	//STEP 2: Fresnel
-	//Calculating Fresnel F0 where F0 = Constant in Dielectrics. For metals, its albedo.
-	//Calculating  Fresnel-Schlick's Approximation Function where F = Fsch 
+	//STEP 2: Fresnel calculation F0 where F0 = Constant in Dielectrics. For metals, its albedo.
     float3 F0 = float3(0.04, 0.04, 0.04);
     F0 = lerp(F0, albedo, metallic);
-    float3 F = F0 + (1 - F0) * pow(1 - cosTheta, 5); 
-    //return float4(F, 1.0);
-	
+    float3 F = F0 + (1 - F0) * pow(1 - cosTheta, 5); //Fresnel-Schlick's Approximation Function where F = Fsch 
+
 	//STEP 3: Specular BRDF
     float D = CalculateNDF(roughness, N, H); //Normal Distribution Function
-    //return float4(NDF, NDF, NDF, 1.0);
-	
-    float k = pow(roughness + 1, 2) / 8; //Geometry Function v
-    float G = G_sub(L, N, roughness) * G_sub(V, N, roughness);
-    //return float4(G, G, G, 1.0);
-	
-    float3 SpecularBRDF = D * G * F / (4 * dot(N, L) * dot(N, V)); //Calculate Specular BRDF
-    return float4(SpecularBRDF, 1.0);
+    float k = pow(roughness + 1, 2) / 8; 
+    float G = G_sub(L, N, roughness) * G_sub(V, N, roughness); //Geometry Smith Function
+    float3 specular = D * G * F / (4 * dot(N, L) * dot(N, V)); //Calculate Specular BRDF
+    //return float4(specular, 1.0);
 	
 	//STEP 4: Diffuse
     float3 kD = float3(1, 1, 1) - F * (1 - metallic); //Diffuse Colour based on Fresnel term & Metallic Value
     float3 diffuse = kD * albedo / PI;
-	
     return float4(diffuse, 1.0);
 }
 
