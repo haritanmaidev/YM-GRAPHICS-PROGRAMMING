@@ -180,7 +180,7 @@ float4 PS_PBR(PS_INPUT IN) : SV_TARGET
 	
     float3 albedo = float3(0.3, 0.3, 0.3);
     float metallic = 1.0f;
-    float roughness = 0.5f;
+    float roughness = 0.3f;
 	
 	//STEP 1: Calculate vectors
     float3 N = IN.Norm;
@@ -200,7 +200,7 @@ float4 PS_PBR(PS_INPUT IN) : SV_TARGET
     float k = pow(roughness + 1, 2) / 8; 
     float G = G_sub(L, N, roughness) * G_sub(V, N, roughness); //Geometry Smith Function
     float3 specular = D * G * F / (4 * dot(N, L) * dot(N, V)); //Calculate Specular BRDF
-    //return float4(specular, 1.0);
+    return float4(specular, 1.0);
 	
 	//STEP 4: Diffuse
     float3 kD = float3(1, 1, 1) - F * (1 - metallic); //Diffuse Colour based on Fresnel term & Metallic Value
@@ -208,10 +208,10 @@ float4 PS_PBR(PS_INPUT IN) : SV_TARGET
     return float4(diffuse, 1.0);
 }
 
+
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
-
 float4 PS_Normal(PS_INPUT IN) : SV_TARGET
 {
     float4 pixelToLightVectorNormalised = normalize(Lights[0].Position - IN.worldPos);
