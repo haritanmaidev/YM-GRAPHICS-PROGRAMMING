@@ -165,6 +165,23 @@ PS_INPUT VS( VS_INPUT input )
 float4 PS_PBR(PS_INPUT IN) : SV_TARGET
 {
     float4 finalColour = float4(1, 0, 0, 1);
+	
+    float3 albedo = float3(1, 0, 0);
+    float metallic = 0.1f;
+    float roughness = 0.4f;
+	
+    float3 N = IN.Norm;
+	//Calculate vectors
+    float3 V = normalize(EyePosition - IN.worldPos);
+    float3 L = normalize(Lights[0].Position - IN.worldPos);
+    float3 H = normalize(V + L);
+    float cosTheta = max(dot(N, V), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
+	
+	//Fresnel F0 Calculation
+	//F0 = Constant in Dielectrics. For metals, its albedo.
+    float3 F0 = float3(0.04, 0.04, 0.04);
+    F0 = lerp(F0, albedo, metallic);
     
     return float4(finalColour);
 }
@@ -193,21 +210,10 @@ float4 PS_Normal(PS_INPUT IN) : SV_TARGET
     float4 diffuseColor = (ambient + diffuse + specular) * texColor;
 	
     //return diffuseColor;
-}
-
-float4 PS_Toon(PS_INPUT IN) : SV_TARGET
-{
-    float4 pixelToLightVectorNormalised = normalize(Lights[0].Position - IN.worldPos);
-    float4 pixelToEyeVectorNormalised = normalize(EyePosition - IN.worldPos);
-    float distanceFromPixelToLight = length(IN.worldPos - Lights[0].Position);
-    LightingResult lit = ComputeLighting(pixelToLightVectorNormalised, pixelToEyeVectorNormalised, distanceFromPixelToLight, normalize(IN.Norm));
-    float4 ambient = GlobalAmbient;
-    float4 diffuse = lit.Diffuse;
-    float4 specular = lit.Specular;
-    float4 texColor = albedoMap.Sample(samLinear, IN.Tex);
-
+	
 	//TOON EFFECT
-    float diffuseIntensity = saturate(dot(Lights[0].Direction, IN.Norm));
+    float diffuseIntensity = saturate(dot(Lights[0].Direction, diffuse));
+	
     if (diffuseIntensity > 0.8f) diffuseIntensity = 1.0f; // Brightest band
     else if (diffuseIntensity > 0.4f) diffuseIntensity = 0.6f; // Mid-tone band
     else diffuseIntensity = 0.2f; // Darkest band
@@ -215,6 +221,7 @@ float4 PS_Toon(PS_INPUT IN) : SV_TARGET
     float4 finalColor = (ambient + (Lights[0].Color * diffuseIntensity)) * float4(texColor.rgb, 1.0);
     return finalColor;
 }
+
 
 //--------------------------------------------------------------------------------------
 // PSSolid - render a solid color
