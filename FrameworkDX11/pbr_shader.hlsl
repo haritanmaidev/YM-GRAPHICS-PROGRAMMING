@@ -227,11 +227,12 @@ float4 PS_PBR(PS_INPUT IN) : SV_TARGET
 	
 	
 	//STEP 5: Final Outgoing Light
-    float3 Lc = float3(1, 1, 1);
-    float3 Lo = (diffuse + specular) * NdotL ;
-    float4 finalColour = float4(ambient + (Lo * Lc), 1.0);
+    float3 Lc = float3(1, 0, 0);     //Lighting Colour
+    float3 L0 = (diffuse + specular) * NdotL; //Outgoing Light
+    float3 FinalL0 = ambient + (L0 * Lc); //Final Outgoing Light with Ambient
 	
-    return finalColour;
+    //float4 finalColour = float4(ambient + L0, 1.0);
+    return float4(FinalL0, 1.0);
 }
 
 
