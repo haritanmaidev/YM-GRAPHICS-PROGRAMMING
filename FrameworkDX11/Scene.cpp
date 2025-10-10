@@ -50,6 +50,8 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
     // load and setup textures
     hr = CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Resources\\rusty_metal_04_diff.dds", nullptr, &m_pTextureDiffuse);
 	hr = CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Resources\\rusty_metal_04_rough.dds", nullptr, &m_pTextureRoughness);
+	hr = CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Resources\\rusty_metal_04_metal.dds", nullptr, &m_pTextureMetallic);
+	hr = CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Resources\\rusty_metal_04_ao.dds", nullptr, &m_pTextureAmbientOcclusion);
     if (FAILED(hr))
         return hr;
 
@@ -86,7 +88,8 @@ void Scene::setupLightProperties()
     light.QuadraticAttenuation = 1;
 
     // set up the light
-    XMFLOAT4 LightPosition(m_pCamera->getPosition().x, m_pCamera->getPosition().y, m_pCamera->getPosition().z, 1);
+    //XMFLOAT4 LightPosition(m_pCamera->getPosition().x, m_pCamera->getPosition().y, m_pCamera->getPosition().z, 1);
+    XMFLOAT4 LightPosition(5,5,-6, 1);
     light.Position = LightPosition;
     
     m_lightProperties.EyePosition = LightPosition;
@@ -98,6 +101,8 @@ void Scene::update(const float deltaTime)
     // note the pixel shader and the vertex shader have been set by the renderer class calling this method
     m_pImmediateContext->PSSetShaderResources(0, 1, &m_pTextureDiffuse);
     m_pImmediateContext->PSSetShaderResources(1, 1, &m_pTextureRoughness);
+	m_pImmediateContext->PSSetShaderResources(2, 1, &m_pTextureMetallic);
+	m_pImmediateContext->PSSetShaderResources(3, 1, &m_pTextureAmbientOcclusion);
     m_pImmediateContext->PSSetSamplers(0, 1, &m_pSamplerLinear);
 	
     m_lightProperties.EyePosition = XMFLOAT4(m_pCamera->getPosition().x, m_pCamera->getPosition().y, m_pCamera->getPosition().z, 1);
