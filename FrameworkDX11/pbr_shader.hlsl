@@ -281,8 +281,8 @@ float4 PS_PBR(PS_INPUT IN) : SV_TARGET
         // Calculate Specular IBL
         float3 R = reflect(-V, N);
         static const int maxReflectionLOD = 10;
-        float prefilteredLod = roughness * maxReflectionLOD;
-        float3 prefilteredColour = iblSpecular.SampleLevel(samLinear, R, prefilteredLod).rgb;
+        float prefilteredLOD = roughness * maxReflectionLOD; //Calculating Mip Level
+        float3 prefilteredColour = iblSpecular.SampleLevel(samLinear, R, prefilteredLOD).rgb;
         float2 BRDF = IntegrateBRDF(cosTheta, roughness);
         float specularIBL = prefilteredColour * (F * BRDF.x + BRDF.y);
         finalIBL = (diffuseIBL + specularIBL) * albedo;
