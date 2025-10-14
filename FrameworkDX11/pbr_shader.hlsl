@@ -186,13 +186,21 @@ float G_sub(float3 N, float3 V, float k)
 
 float4 PS_PBR(PS_INPUT IN) : SV_TARGET
 {	
+	//-----------------------------------------------[[[[PART - A: BRDF]]]]]----------------------------------------------
     float3 albedo = albedoMap.Sample(samLinear, IN.Tex);
     float3 metallic = metallicMap.Sample(samLinear, IN.Tex);
     float roughness = roughnessMap.Sample(samLinear, IN.Tex);
-    float ao = aoMap.Sample(samLinear, IN.Tex);
-    float3 ambient = float3(0.01, 0.01, 0.01) * albedo * ao;
-    //return float4(albedo, 1.0);
-	
+    float3 SkyColour = float3(0.2, 0.3, 0.5);
+    float3 GroundColour = float3(0.1, 0.05, 0);
+    //float ao = aoMap.Sample(samLinear, IN.Tex);
+    //float3 ambient = float3(0.01, 0.01, 0.01) * albedo * ao;
+
+    //albedo = float3(1.0, 0.78, 0.34); // gold
+    albedo = float3(1.0, 1.0, 1.0); // white
+    SkyColour = float3(0.11, 0.11, 0.94); // A blue sky
+    GroundColour = float3(0.0, 0.33, 0.0); // A green groun
+    metallic = 0;
+    roughness = 0.01;
 	
 	//STEP 1: Calculate vectors
     float3 N = normalize(IN.Norm);
@@ -202,37 +210,62 @@ float4 PS_PBR(PS_INPUT IN) : SV_TARGET
     float cosTheta = max(dot(N, V), 0.0);
     float NdotL = max(dot(N, L), 0.0);
 	
-	
 	//STEP 2: Fresnel calculation F0 where F0 = Constant in Dielectrics. For metals, its albedo.
     float3 F0 = float3(0.04, 0.04, 0.04);
     F0 = lerp(F0, albedo, metallic);
-    float3 F = F0 + (1 - F0) * pow(1 - cosTheta, 5); //Fresnel-Schlick's Approximation Function where F = Fsch 
-    //return float4(F, 1.0);
-	
+    float3 F = F0 + (1 - F0) * pow(1 - cosTheta, 5); //Fresnel-Schlick's Approximation Function where F = Fsch = kS
 	
 	//STEP 3: Specular BRDF
     float D = CalculateNDF(roughness, N, H); //Normal Distribution Function
     float k = pow(roughness + 1, 2) / 8; 
     float G = G_sub(L, N, roughness) * G_sub(V, N, roughness); //Geometry Smith Function
     float3 specular = (D * G * F) / (4 * dot(N, L) * dot(N, V)); //Calculate Specular BRD
-    //return float4(D, D, D, 1.0);
-    //return float4(G, G, G, 1.0);
-    //return float4(specular, 1.0);
 
-	
 	//STEP 4: Diffuse
     float3 kD = (float3(1.0, 1.0, 1.0) - F) * float3(1.0 - metallic); //Diffuse Colour based on Fresnel term & Metallic Value
     float3 diffuse = kD * albedo / PI;
-    //return float4(kD, 1.0);
-	
 	
 	//STEP 5: Final Outgoing Light
     float3 Lc = float3(1, 0, 0);     //Lighting Colour
-    float3 L0 = (diffuse + specular) * NdotL; //Outgoing Light
-    float3 FinalL0 = ambient + (L0 * Lc); //Final Outgoing Light with Ambient
-	
-    //float4 finalColour = float4(ambient + L0, 1.0);
-    return float4(FinalL0, 1.0);
+    float3 Lo = (diffuse + specular) * NdotL; //Outgoing Light
+    //float3 LoAmb = ambient + (Lo * Lc); //Outgoing Light with Ambient
+    
+    
+    //-----------------------------------------------[[[[PART - B: ENVIRONMENTAL COLOUR]]]]]---------------------------------------------
+    float3 up = float3(0, 1, 0);
+    float3 finalIBL = float3(0, 0, 0);
+
+    int typeIBL = 1;
+    if (typeIBL == 0)
+    {
+        //Dim Ambient Light
+        float3 ambientLight = float3(0.1, 0.1, 0.1); 
+        finalIBL = ambientLight * albedo * kD;
+    }
+    else if (typeIBL == 1)
+    {
+        //Calculate Diffuse Ambient Light
+        float blend_factor = dot(N, up) * 0.5 + 0.5;
+        float3 diffuseLight = lerp(GroundColour, SkyColour, blend_factor);
+        
+        //Calculate Specular Ambient Light
+        float3 R = reflect(-V, N);
+        float specular_blend_factor = dot(R, up) * 0.5 + 0.5;
+        float3 specularLight = lerp(GroundColour, SkyColour, specular_blend_factor);
+        
+        //Combine Diffuse and Specular
+        float3 DiffuseContribution = kD * diffuseLight * albedo;
+        float3 SpecularContribution = F * specularLight;
+        finalIBL = DiffuseContribution + SpecularContribution;
+
+    }
+    else if (typeIBL == 2)
+    {
+    // Our code for Step 3 will go here
+    }
+    
+    float3 colour = finalIBL + Lo;
+    return float4(colour, 1.0);
 }
 
 
