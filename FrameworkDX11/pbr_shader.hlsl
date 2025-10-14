@@ -13,6 +13,10 @@ Texture2D albedoMap : register(t0);
 Texture2D roughnessMap : register(t1);
 Texture2D metallicMap : register(t2);
 Texture2D aoMap : register(t3);
+TextureCube iblSpecular : register(t4);
+TextureCube iblDiffuse : register(t5);
+TextureCube iblAlbedo : register(t6);
+
 SamplerState samLinear : register(s0);
 
 static const float PI = 3.14159265f;
@@ -184,6 +188,17 @@ float G_sub(float3 N, float3 V, float k)
     return saturate(dot(N, V)) / (dot(N, V) * (1 - k) + k);
 }
 
+float2 IntegrateBRDF(float NdotV, float roughness)
+{
+    const float4 c0 = float4(-1, -0.0275, -0.572, 0.022);
+    const float4 c1 = float4(1, 0.0425, 1.04, -0.04);
+
+    float4 r = roughness * c0 + c1;
+    float a004 = min(r.x * r.x, exp2(-9.28 * NdotV)) * r.x + r.y;
+    
+    return float2(-1.04, 1.04) * a004 + r.zw;
+}
+
 float4 PS_PBR(PS_INPUT IN) : SV_TARGET
 {	
 	//-----------------------------------------------[[[[PART - A: BRDF]]]]]----------------------------------------------
@@ -192,15 +207,14 @@ float4 PS_PBR(PS_INPUT IN) : SV_TARGET
     float roughness = roughnessMap.Sample(samLinear, IN.Tex);
     float3 SkyColour = float3(0.2, 0.3, 0.5);
     float3 GroundColour = float3(0.1, 0.05, 0);
-    //float ao = aoMap.Sample(samLinear, IN.Tex);
-    //float3 ambient = float3(0.01, 0.01, 0.01) * albedo * ao;
-
-    //albedo = float3(1.0, 0.78, 0.34); // gold
-    albedo = float3(1.0, 1.0, 1.0); // white
+    float ao = aoMap.Sample(samLinear, IN.Tex);
+    float3 ambient = float3(0.01, 0.01, 0.01) * albedo * ao;
+    albedo = float3(1.0, 0.78, 0.34); // gold
+    //albedo = float3(1.0, 1.0, 1.0); // white
+    metallic = 1;
+    roughness = 0.01;
     SkyColour = float3(0.11, 0.11, 0.94); // A blue sky
     GroundColour = float3(0.0, 0.33, 0.0); // A green groun
-    metallic = 0;
-    roughness = 0.01;
 	
 	//STEP 1: Calculate vectors
     float3 N = normalize(IN.Norm);
@@ -235,7 +249,7 @@ float4 PS_PBR(PS_INPUT IN) : SV_TARGET
     float3 up = float3(0, 1, 0);
     float3 finalIBL = float3(0, 0, 0);
 
-    int typeIBL = 1;
+    int typeIBL = 2;
     if (typeIBL == 0)
     {
         //Dim Ambient Light
@@ -261,7 +275,17 @@ float4 PS_PBR(PS_INPUT IN) : SV_TARGET
     }
     else if (typeIBL == 2)
     {
-    // Our code for Step 3 will go here
+        // Calculate Diffuse IBL
+        float3 irradiance = iblDiffuse.Sample(samLinear, N).rgb;
+        float diffuseIBL = kD * albedo * irradiance;
+        // Calculate Specular IBL
+        float3 R = reflect(-V, N);
+        static const int maxReflectionLOD = 10;
+        float prefilteredLod = roughness * maxReflectionLOD;
+        float3 prefilteredColour = iblSpecular.SampleLevel(samLinear, R, prefilteredLod).rgb;
+        float2 BRDF = IntegrateBRDF(cosTheta, roughness);
+        float specularIBL = prefilteredColour * (F * BRDF.x + BRDF.y);
+        finalIBL = (diffuseIBL + specularIBL) * albedo;
     }
     
     float3 colour = finalIBL + Lo;

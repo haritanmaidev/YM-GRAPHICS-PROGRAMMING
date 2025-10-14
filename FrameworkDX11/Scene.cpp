@@ -16,11 +16,11 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
 
     m_ctx.Init(device.Get(), context.Get(), renderer);
     //bool ok = m_sceneobject.LoadSphere(m_ctx);
-    bool ok = m_sceneobject.LoadGLTF(m_ctx, L"Resources\\sphere.gltf");
-	ok = m_sceneobject2.LoadGLTF(m_ctx, L"Resources\\sphere.gltf");
-
+    //bool ok = m_sceneobject.LoadGLTF(m_ctx, L"Resources\\sphere.gltf");
+	bool ok2 = m_sceneobject2.LoadGLTF(m_ctx, L"Resources\\sphere.gltf");
+    bool ok = m_sceneobject.LoadGLTFWithSkeleton(m_ctx, L"Resources\\Fox.gltf");
     //bool ok = m_sceneobject.LoadGLTF(m_ctx, L"Resources\\FlightHelmet.gltf");
-    //bool ok = m_sceneobject.LoadGLTFWithSkeleton(m_ctx, L"Resources\\Fox.gltf");
+
 
     m_pCamera = new Camera(XMFLOAT3(0, 0, -6), XMFLOAT3(0, 0, 1), XMFLOAT3(0.0f, 1.0f, 0.0f), width, height);
     
@@ -47,11 +47,15 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
         return hr;
 
 
-    // load and setup textures
+    // Load and setup textures
     hr = CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Resources\\rusty_metal_04_diff.dds", nullptr, &m_pTextureDiffuse);
 	hr = CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Resources\\rusty_metal_04_rough.dds", nullptr, &m_pTextureRoughness);
 	hr = CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Resources\\rusty_metal_04_metal.dds", nullptr, &m_pTextureMetallic);
 	hr = CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Resources\\rusty_metal_04_ao.dds", nullptr, &m_pTextureAmbientOcclusion);
+    // TextureCube setup
+	hr = CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Resources\\SpecularCM.dds", nullptr, &m_pTextureSpecularIBL);
+	hr = CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Resources\\DiffuseCM.dds", nullptr, &m_pTextureDiffuseIBL);
+	hr = CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Resources\\AlbedoCM.dds", nullptr, &m_pTextureAlbedoIBL);
     if (FAILED(hr))
         return hr;
 
@@ -65,8 +69,6 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
     sampDesc.MinLOD = 0;
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
     hr = m_pd3dDevice->CreateSamplerState(&sampDesc, &m_pSamplerLinear);
-
-    
 
     return S_OK;
 }
@@ -103,6 +105,9 @@ void Scene::update(const float deltaTime)
     m_pImmediateContext->PSSetShaderResources(1, 1, &m_pTextureRoughness);
 	m_pImmediateContext->PSSetShaderResources(2, 1, &m_pTextureMetallic);
 	m_pImmediateContext->PSSetShaderResources(3, 1, &m_pTextureAmbientOcclusion);
+	m_pImmediateContext->PSSetShaderResources(4, 1, &m_pTextureSpecularIBL);
+	m_pImmediateContext->PSSetShaderResources(5, 1, &m_pTextureDiffuseIBL);
+	m_pImmediateContext->PSSetShaderResources(6, 1, &m_pTextureAlbedoIBL);
     m_pImmediateContext->PSSetSamplers(0, 1, &m_pSamplerLinear);
 	
     m_lightProperties.EyePosition = XMFLOAT4(m_pCamera->getPosition().x, m_pCamera->getPosition().y, m_pCamera->getPosition().z, 1);
@@ -119,4 +124,7 @@ void Scene::update(const float deltaTime)
     m_sceneobject2.SetMatrixToRoots(m);
     m_sceneobject2.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made
     m_sceneobject2.RenderFrame(m_ctx, deltaTime); // renders the object
+
+    // scene object 3 helmet
+    
 }

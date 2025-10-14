@@ -68,6 +68,7 @@ private:
 	ID3D11ShaderResourceView* m_pTextureAmbientOcclusion;
 	ID3D11ShaderResourceView* m_pTextureSpecularIBL;
 	ID3D11ShaderResourceView* m_pTextureDiffuseIBL;
+	ID3D11ShaderResourceView* m_pTextureAlbedoIBL;
 
 	ID3D11SamplerState* m_pSamplerLinear;
 };
