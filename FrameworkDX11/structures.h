@@ -20,6 +20,18 @@ struct ConstantBuffer
 	unsigned int bone_count;
 };
 
+struct ConstantBufferMaterials 
+{
+	ConstantBufferMaterials(): 
+		Roughness(0.5f), 
+		Metallic(0.5f) 
+	{}
+	float Roughness;
+	float Metallic;
+	int IBLType;
+	float Padding; // Padding to make size a multiple of 16 bytes
+};
+
 
 
 enum LightType

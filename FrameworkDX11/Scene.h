@@ -41,6 +41,9 @@ public:
 	
 	const LightPropertiesConstantBuffer& getLightProperties() { return m_lightProperties; }
 
+	ConstantBufferMaterials& getMaterialProperties() { return m_materialProperties; }
+
+
 private:
 	void setupLightProperties();
 
@@ -52,8 +55,11 @@ public:
 	Microsoft::WRL::ComPtr <ID3D11Buffer>			m_pConstantBuffer;
 	Microsoft::WRL::ComPtr <ID3D11Buffer>			m_pLightConstantBuffer;
 	Microsoft::WRL::ComPtr <ID3D11Buffer>			m_pCustomConstantBuffer;
+	Microsoft::WRL::ComPtr <ID3D11Buffer>			m_pConstantBufferMaterials;
 
 
+
+	ConstantBufferMaterials m_materialProperties;
 	LightPropertiesConstantBuffer m_lightProperties;
 	IRenderingContext m_ctx;
 	SceneGraph m_sceneobject;

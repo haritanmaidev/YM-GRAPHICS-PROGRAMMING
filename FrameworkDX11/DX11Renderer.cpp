@@ -497,6 +497,14 @@ void DX11Renderer::CentreMouseInWindow(HWND hWnd)
 }
 
 
+void DX11Renderer::dragIMGUIdraw() 
+{
+    ConstantBufferMaterials& matProp = m_pScene->getMaterialProperties();
+
+    ImGui::SliderFloat("Roughness", &matProp.Roughness, 0.0f, 1.0f);
+    ImGui::SliderFloat("Metallic", &matProp.Metallic, 0.0f, 1.0f);
+}
+
 void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
 {
     // Start the Dear ImGui frame
@@ -519,8 +527,6 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
     ImGui::Spacing();
 
     ImGui::SliderInt("Number of Cubes", &g_cube_count, 2, max_number_of_boxes);*/
-
-    
 }
 
 void DX11Renderer::completeIMGUIDraw()
@@ -545,7 +551,7 @@ void DX11Renderer::update(const float deltaTime)
     }
 
     startIMGUIDraw(FPS);
-
+    dragIMGUIdraw();
     // Clear the back buffer
     float blueish[4] = { 0.2, 0.2, 1, 1 };
     m_pImmediateContext->ClearRenderTargetView(m_pRenderTargetView.Get(), blueish);

@@ -53,6 +53,7 @@ private: // methods
 	void	startIMGUIDraw(const unsigned int FPS);
 	void	completeIMGUIDraw();
 	void	CentreMouseInWindow(HWND hWnd);
+	void    dragIMGUIdraw();
 
 
 public: // properties
@@ -75,7 +76,6 @@ public: // properties
 
 	XMFLOAT4X4				m_matProjection;
 	ConstantBuffer			m_ConstantBufferData;
-
 
 	Scene* m_pScene;
 	

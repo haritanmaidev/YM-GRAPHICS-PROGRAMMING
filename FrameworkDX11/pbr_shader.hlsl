@@ -9,6 +9,12 @@ cbuffer ConstantBuffer : register( b0 )
 	float4 vOutputColor;
 }
 
+cbuffer ConstantBufferMaterials : register(b2)
+{
+    float roughnessBuffer;
+    float metallicBuffer;
+}
+
 Texture2D albedoMap : register(t0);
 Texture2D roughnessMap : register(t1);
 Texture2D metallicMap : register(t2);
@@ -211,8 +217,8 @@ float4 PS_PBR(PS_INPUT IN) : SV_TARGET
     float3 ambient = float3(0.01, 0.01, 0.01) * albedo * ao;
     albedo = float3(1.0, 0.78, 0.34); // gold
     //albedo = float3(1.0, 1.0, 1.0); // white
-    metallic = 1;
-    roughness = 0.01;
+    metallic = metallicBuffer;
+    roughness = roughnessBuffer;
     SkyColour = float3(0.11, 0.11, 0.94); // A blue sky
     GroundColour = float3(0.0, 0.33, 0.0); // A green groun
 	

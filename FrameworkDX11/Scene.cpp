@@ -35,8 +35,17 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
     if (FAILED(hr))
         return hr;
 
-    setupLightProperties();
+    // Create the material constant buffer
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(ConstantBufferMaterials);
+	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bd.CPUAccessFlags = 0;
+	hr = m_pd3dDevice->CreateBuffer(&bd, nullptr, &m_pConstantBufferMaterials);
+    if (FAILED(hr))
+        return hr;
 
+
+    setupLightProperties();
     // Create the light constant buffer
     bd.Usage = D3D11_USAGE_DEFAULT;
     bd.ByteWidth = sizeof(LightPropertiesConstantBuffer);
@@ -114,6 +123,10 @@ void Scene::update(const float deltaTime)
     m_pImmediateContext->UpdateSubresource(m_pLightConstantBuffer.Get(), 0, nullptr, &m_lightProperties, 0, 0);
     ID3D11Buffer* buf = m_pLightConstantBuffer.Get();
     m_pImmediateContext->PSSetConstantBuffers(1, 1, &buf);
+
+    m_pImmediateContext->UpdateSubresource(m_pConstantBufferMaterials.Get(), 0, nullptr, &m_materialProperties, 0, 0);
+    ID3D11Buffer* matbuf = m_pConstantBufferMaterials.Get();
+    m_pImmediateContext->PSSetConstantBuffers(2, 1, &matbuf);
 
     // scene object 1 
     m_sceneobject.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made
