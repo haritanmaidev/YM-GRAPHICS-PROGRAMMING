@@ -22,10 +22,7 @@ struct ConstantBuffer
 
 struct ConstantBufferMaterials 
 {
-	ConstantBufferMaterials(): 
-		Roughness(0.5f), 
-		Metallic(0.5f) 
-	{}
+	ConstantBufferMaterials(): Roughness(0.1f), Metallic(0.9f), IBLType(2) {}
 	float Roughness;
 	float Metallic;
 	int IBLType;

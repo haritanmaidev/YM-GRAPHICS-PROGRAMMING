@@ -13,6 +13,7 @@ cbuffer ConstantBufferMaterials : register(b2)
 {
     float roughnessBuffer;
     float metallicBuffer;
+    int IBLTypeBuffer;
 }
 
 Texture2D albedoMap : register(t0);
@@ -255,7 +256,7 @@ float4 PS_PBR(PS_INPUT IN) : SV_TARGET
     float3 up = float3(0, 1, 0);
     float3 finalIBL = float3(0, 0, 0);
 
-    int typeIBL = 2;
+    int typeIBL = IBLTypeBuffer;
     if (typeIBL == 0)
     {
         //Dim Ambient Light
