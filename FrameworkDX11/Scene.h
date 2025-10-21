@@ -49,7 +49,7 @@ private:
 
 public:
 	Camera* m_pCamera;
-	
+
 	Microsoft::WRL::ComPtr <ID3D11Device>			m_pd3dDevice;
 	Microsoft::WRL::ComPtr <ID3D11DeviceContext>	m_pImmediateContext;
 	Microsoft::WRL::ComPtr <ID3D11Buffer>			m_pConstantBuffer;
@@ -57,13 +57,18 @@ public:
 	Microsoft::WRL::ComPtr <ID3D11Buffer>			m_pCustomConstantBuffer;
 	Microsoft::WRL::ComPtr <ID3D11Buffer>			m_pConstantBufferMaterials;
 
-
-
 	ConstantBufferMaterials m_materialProperties;
 	LightPropertiesConstantBuffer m_lightProperties;
 	IRenderingContext m_ctx;
 	SceneGraph m_sceneobject;
 	SceneGraph m_sceneobject2;
+	SceneGraph m_sceneobject3;
+
+	//Animation stuff
+	DirectX::XMFLOAT3 m_startPos = { -3.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_endPos = { 3.0f, 0.0f, 0.0f };
+	float m_t = 0.0f;
+	float m_direction = 1.0f; //To control ping pong anim
 
 
 private:

@@ -17,10 +17,11 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
     m_ctx.Init(device.Get(), context.Get(), renderer);
     //bool ok = m_sceneobject.LoadSphere(m_ctx);
     //bool ok = m_sceneobject.LoadGLTF(m_ctx, L"Resources\\sphere.gltf");
-	bool ok2 = m_sceneobject2.LoadGLTF(m_ctx, L"Resources\\sphere.gltf");
-    bool ok = m_sceneobject.LoadGLTFWithSkeleton(m_ctx, L"Resources\\Fox.gltf");
+	//bool ok2 = m_sceneobject2.LoadGLTF(m_ctx, L"Resources\\sphere.gltf");
+    //bool ok = m_sceneobject.LoadGLTFWithSkeleton(m_ctx, L"Resources\\Fox.gltf");
     //bool ok = m_sceneobject.LoadGLTF(m_ctx, L"Resources\\FlightHelmet.gltf");
-
+	bool animok = m_sceneobject3.LoadGLTF(m_ctx, L"Resources\\Box.gltf");   
+    
 
     m_pCamera = new Camera(XMFLOAT3(0, 0, -6), XMFLOAT3(0, 0, 1), XMFLOAT3(0.0f, 1.0f, 0.0f), width, height);
     
@@ -132,12 +133,30 @@ void Scene::update(const float deltaTime)
     m_sceneobject.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made
     m_sceneobject.RenderFrame(m_ctx, deltaTime); // renders the object
 
-    // scene object 2 
+    // scene object 2
     XMMATRIX m = XMMatrixTranslation(4, 0, 0);
     m_sceneobject2.SetMatrixToRoots(m);
     m_sceneobject2.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made
     m_sceneobject2.RenderFrame(m_ctx, deltaTime); // renders the object
 
-    // scene object 3 helmet
-    
+    //----------------------------------------------|||||||||||{[[[ ANIMATION  STUFF ]]]}|||||||||||----------------------------------------------//
+    m_t += deltaTime * m_direction;
+    if (m_t > 1.0f || m_t < 0.0f) 
+    {
+        m_direction *= -1.0f; // reverse direction
+		m_t = max(0.0f, min(1.0f, m_t)); // clamps t between 0 and 1
+    }
+
+    DirectX::XMVECTOR currentPos = DirectX::XMVectorLerp
+    (
+        DirectX::XMLoadFloat3(&m_startPos), 
+        DirectX::XMLoadFloat3(&m_endPos),
+        m_t
+    );
+	DirectX::XMMATRIX translationMatrix = DirectX::XMMatrixTranslationFromVector(currentPos);
+
+    //Get box's scene node and set its transform
+	m_sceneobject3.GetRootNode(0)->SetMatrix(translationMatrix);
+    m_sceneobject3.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made
+    m_sceneobject3.RenderFrame(m_ctx, deltaTime); // renders the object
 }
