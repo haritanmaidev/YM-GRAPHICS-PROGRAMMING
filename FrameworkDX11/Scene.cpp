@@ -15,23 +15,18 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
 	HRESULT hr2;
 
     m_ctx.Init(device.Get(), context.Get(), renderer);
-    //bool ok = m_sceneobject.LoadSphere(m_ctx);
-    //bool ok = m_sceneobject.LoadGLTF(m_ctx, L"Resources\\sphere.gltf");
-	//bool ok2 = m_sceneobject2.LoadGLTF(m_ctx, L"Resources\\sphere.gltf");
-    //bool ok = m_sceneobject.LoadGLTFWithSkeleton(m_ctx, L"Resources\\Fox.gltf");
-    //bool ok = m_sceneobject.LoadGLTF(m_ctx, L"Resources\\FlightHelmet.gltf");
 
     //Animation stuff
 	bool animok = m_sceneSunBox.LoadGLTF(m_ctx, L"Resources\\Box.gltf");   
 	bool animok2 = m_scenePlanetBox.LoadGLTF(m_ctx, L"Resources\\Box.gltf");
-	bool animok3 = m_sceneobject3.LoadSphere(m_ctx);
+	bool animok3 = m_sceneobject2.LoadSphere(m_ctx);
     DirectX:XMStoreFloat4(&m_startRot, DirectX::XMQuaternionIdentity());    
     DirectX::XMStoreFloat4(&m_endRot, DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), DirectX::XM_PI));
 
     AnimationSampler animPosition;
 	animPosition.vec3_values.push_back(m_startPos);
-	animPosition.timestamps.push_back(0.0f);
 	animPosition.vec3_values.push_back(m_endPos);
+	animPosition.timestamps.push_back(0.0f);
 	animPosition.timestamps.push_back(2.0f);
     //GIVE IT A NAME
 	m_myAnimation.m_samplers.push_back(animPosition);
@@ -137,52 +132,16 @@ void Scene::update(const float deltaTime)
     ID3D11Buffer* buf = m_pLightConstantBuffer.Get();
     m_pImmediateContext->PSSetConstantBuffers(1, 1, &buf);
 
+    //IMGUI Update
     m_pImmediateContext->UpdateSubresource(m_pConstantBufferMaterials.Get(), 0, nullptr, &m_materialProperties, 0, 0);
     ID3D11Buffer* matbuf = m_pConstantBufferMaterials.Get();
     m_pImmediateContext->PSSetConstantBuffers(2, 1, &matbuf);
 
-    // scene object 1 
-    m_sceneobject.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made
-    m_sceneobject.RenderFrame(m_ctx, deltaTime); // renders the object
-
-    // scene object 2
-    XMMATRIX m = XMMatrixTranslation(4, 0, 0);
-    m_sceneobject2.SetMatrixToRoots(m);
-    m_sceneobject2.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made
-    m_sceneobject2.RenderFrame(m_ctx, deltaTime); // renders the object
-
 
     //----------------------------------------------=======================|||||[[[{{{ ANIMATION  STUFF }}}]]]}|||||=======================----------------------------------------------//
-    animationTimer += deltaTime;
-	AnimationSampler sampler = m_myAnimation.m_samplers[0];
-    int nextKeyframe = -1;
-
-    for(int i = 0; sampler.timestamps.size(); i++) //Loop through sampler's timestamps to find next keyframe to animate
-    {
-        if (sampler.timestamps[i] > animationTimer)
-        {
-            nextKeyframe = i;
-            break;
-        }
-	}
-    if (nextKeyframe == -1 || nextKeyframe == 0) nextKeyframe = 1;
-
-    int prevKeyframe = nextKeyframe - 1; //Sanity check: Calculate progress between these two timestamps
-    float prevTime = sampler.timestamps[prevKeyframe];
-    float nextTime = sampler.timestamps[nextKeyframe];
-    float t = (animationTimer - prevTime) / (nextTime - prevTime);
-    if (animationTimer >= nextTime) animationTimer = 0; //Resetting the animation once its finished
-
-    DirectX::XMVECTOR prevValue = DirectX::XMLoadFloat3(&sampler.vec3_values[prevKeyframe]);
-    DirectX::XMVECTOR nextValue = DirectX::XMLoadFloat3(&sampler.vec3_values[nextKeyframe]);
-    DirectX::XMVECTOR finalValue = DirectX::XMVectorLerp(prevValue, nextValue, t);
-
-    DirectX::XMMATRIX translationMatrix2 = DirectX::XMMatrixTranslationFromVector(finalValue);
-
     //m_t += deltaTime * m_direction * 0.1;
     //m_t2 += deltaTime;
-    //Ping pong animation: reverse direction & clamp
-    if (m_t > 1.0f || m_t < 0.0f) 
+    if (m_t > 1.0f || m_t < 0.0f) //Ping pong animation: reverse direction & clamp
     {
         m_direction *= -1.0f; 
 		m_t = max(0.0f, min(1.0f, m_t));
@@ -202,7 +161,33 @@ void Scene::update(const float deltaTime)
     DirectX::XMMATRIX planetLocal = planetTranslation * planetRotation; //NOTE: Order of multiplication matters, translation first, then rotation
     DirectX::XMMATRIX worldPlanet = planetLocal * finalMatrix;
 
-    //Get objects's scene node and set its transform
+    //Sphere animation via sampler
+    animationTimer += deltaTime;
+    AnimationSampler sampler = m_myAnimation.m_samplers[0];
+    int nextKeyframe = -1;
+
+    for (int i = 0; sampler.timestamps.size(); i++) //Loop through sampler's timestamps to find next keyframe to animate
+    {
+        if (sampler.timestamps[i] > animationTimer)
+        {
+            nextKeyframe = i;
+            break;
+        }
+    }
+    if (nextKeyframe == -1 || nextKeyframe == 0) nextKeyframe = 1;
+
+    int prevKeyframe = nextKeyframe - 1; //Sanity check: Calculate progress between these two timestamps
+    float prevTime = sampler.timestamps[prevKeyframe];
+    float nextTime = sampler.timestamps[nextKeyframe];
+    float t = (animationTimer - prevTime) / (nextTime - prevTime);
+    if (animationTimer >= nextTime) animationTimer = 0; //Resetting the animation once its finished
+
+    DirectX::XMVECTOR prevValue = DirectX::XMLoadFloat3(&sampler.vec3_values[prevKeyframe]);
+    DirectX::XMVECTOR nextValue = DirectX::XMLoadFloat3(&sampler.vec3_values[nextKeyframe]);
+    DirectX::XMVECTOR finalValue = DirectX::XMVectorLerp(prevValue, nextValue, t);
+    DirectX::XMMATRIX translationMatrix2 = DirectX::XMMatrixTranslationFromVector(finalValue);
+
+    // Get objects's scene node and set its transform
     // Updates the transform matrix for the object - this should be called after all transforms have been made
     // Renders the object
 	//m_sceneSunBox.GetRootNode(0)->SetMatrix(finalMatrix);
@@ -211,7 +196,7 @@ void Scene::update(const float deltaTime)
 	//m_scenePlanetBox.GetRootNode(0)->SetMatrix(worldPlanet);
 	//m_scenePlanetBox.AnimateFrame(m_ctx);
 	//m_scenePlanetBox.RenderFrame(m_ctx, deltaTime);
-    m_sceneobject3.GetRootNode(0)->SetMatrix(translationMatrix2);
-    m_sceneobject3.AnimateFrame(m_ctx);
-    m_sceneobject3.RenderFrame(m_ctx, deltaTime);
+    m_sceneobject2.GetRootNode(0)->SetMatrix(translationMatrix2);
+    m_sceneobject2.AnimateFrame(m_ctx);
+    m_sceneobject2.RenderFrame(m_ctx, deltaTime);
 }

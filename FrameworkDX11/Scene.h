@@ -60,13 +60,11 @@ public:
 	ConstantBufferMaterials m_materialProperties;
 	LightPropertiesConstantBuffer m_lightProperties;
 	IRenderingContext m_ctx;
-	SceneGraph m_sceneobject;
-	SceneGraph m_sceneobject2;
 	
 	//Animation stuff
 	SceneGraph m_sceneSunBox;
 	SceneGraph m_scenePlanetBox;
-	SceneGraph m_sceneobject3;
+	SceneGraph m_sceneobject2;
 	DirectX::XMFLOAT3 m_startPos = { -3.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT3 m_endPos = { 3.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT4 m_startRot;
