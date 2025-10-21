@@ -64,15 +64,18 @@ public:
 	SceneGraph m_sceneobject2;
 	
 	//Animation stuff
+	SceneGraph m_sceneSunBox;
+	SceneGraph m_scenePlanetBox;
 	SceneGraph m_sceneobject3;
-	SceneGraph m_scenePlanet;
 	DirectX::XMFLOAT3 m_startPos = { -3.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT3 m_endPos = { 3.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT4 m_startRot;
 	DirectX::XMFLOAT4 m_endRot;
 	float m_t = 0.0f;
 	float m_t2 = 0.0f;
+	float animationTimer = 0.0f;
 	float m_direction = 1.0f; //To control ping pong anim
+	Animation m_myAnimation;
 
 
 private:
