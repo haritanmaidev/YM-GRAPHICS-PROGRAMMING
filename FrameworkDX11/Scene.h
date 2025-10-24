@@ -62,10 +62,9 @@ public:
 	IRenderingContext m_ctx;
 	
 	//Animation stuff
-	SceneGraph m_sceneSunBox;
-	SceneGraph m_scenePlanetBox;
 	SceneGraph m_sceneobject2;
 	DirectX::XMFLOAT3 m_startPos = { -3.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_midPos = { 0.0f, 2.0f, 2.0f };
 	DirectX::XMFLOAT3 m_endPos = { 3.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT4 m_startRot;
 	DirectX::XMFLOAT4 m_endRot;

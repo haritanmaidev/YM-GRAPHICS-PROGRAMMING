@@ -17,22 +17,21 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
     m_ctx.Init(device.Get(), context.Get(), renderer);
 
     //Animation stuff
-	bool animok = m_sceneSunBox.LoadGLTF(m_ctx, L"Resources\\Box.gltf");   
-	bool animok2 = m_scenePlanetBox.LoadGLTF(m_ctx, L"Resources\\Box.gltf");
 	bool animok3 = m_sceneobject2.LoadSphere(m_ctx);
-    DirectX:XMStoreFloat4(&m_startRot, DirectX::XMQuaternionIdentity());    
-    DirectX::XMStoreFloat4(&m_endRot, DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), DirectX::XM_PI));
-
     AnimationSampler animPosition;
 	animPosition.vec3_values.push_back(m_startPos);
+	animPosition.vec3_values.push_back(m_midPos);
 	animPosition.vec3_values.push_back(m_endPos);
 	animPosition.timestamps.push_back(0.0f);
+	animPosition.timestamps.push_back(1.0f);
 	animPosition.timestamps.push_back(2.0f);
-    //GIVE IT A NAME
 	m_myAnimation.m_samplers.push_back(animPosition);
-
+    DirectX:XMStoreFloat4(&m_startRot, DirectX::XMQuaternionIdentity());
+    DirectX::XMStoreFloat4(&m_endRot, DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), DirectX::XM_PI));
+    //ALSO GIVE IT A NAME maybe
+    
+    //Setup Camera
     m_pCamera = new Camera(XMFLOAT3(0, 0, -6), XMFLOAT3(0, 0, 1), XMFLOAT3(0.0f, 1.0f, 0.0f), width, height);
-
     // Create the constant buffer
     D3D11_BUFFER_DESC bd = {};
     bd.Usage = D3D11_USAGE_DEFAULT;
@@ -52,7 +51,7 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
     if (FAILED(hr))
         return hr;
 
-
+	//Setup light properties
     setupLightProperties();
     // Create the light constant buffer
     bd.Usage = D3D11_USAGE_DEFAULT;
@@ -62,7 +61,6 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
     hr = m_pd3dDevice->CreateBuffer(&bd, nullptr, &m_pLightConstantBuffer);
     if (FAILED(hr))
         return hr;
-
 
     // Load and setup textures
     hr = CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Resources\\rusty_metal_04_diff.dds", nullptr, &m_pTextureDiffuse);
@@ -139,34 +137,12 @@ void Scene::update(const float deltaTime)
 
 
     //----------------------------------------------=======================|||||[[[{{{ ANIMATION  STUFF }}}]]]}|||||=======================----------------------------------------------//
-    //m_t += deltaTime * m_direction * 0.1;
-    //m_t2 += deltaTime;
-    if (m_t > 1.0f || m_t < 0.0f) //Ping pong animation: reverse direction & clamp
-    {
-        m_direction *= -1.0f; 
-		m_t = max(0.0f, min(1.0f, m_t));
-    }
-
-    //Parent object/sun setup
-    DirectX::XMVECTOR currentPos = DirectX::XMVectorLerp(DirectX::XMLoadFloat3(&m_startPos), DirectX::XMLoadFloat3(&m_endPos), m_t);
-    DirectX::XMVECTOR currentRot = DirectX::XMQuaternionSlerp(DirectX::XMLoadFloat4(&m_startRot), DirectX::XMLoadFloat4(&m_endRot), m_t);
-
-	DirectX::XMMATRIX translationMatrix = DirectX::XMMatrixTranslationFromVector(currentPos); // Compute final transformation matrix values
-	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationQuaternion(currentRot);
-	DirectX::XMMATRIX finalMatrix = translationMatrix;
-
-    //Child object/planet setup
-    DirectX::XMMATRIX planetRotation = DirectX::XMMatrixRotationY(m_t2);
-    DirectX::XMMATRIX planetTranslation = DirectX::XMMatrixTranslation(2.0f, 0.0f, 0.0f);
-    DirectX::XMMATRIX planetLocal = planetTranslation * planetRotation; //NOTE: Order of multiplication matters, translation first, then rotation
-    DirectX::XMMATRIX worldPlanet = planetLocal * finalMatrix;
-
     //Sphere animation via sampler
     animationTimer += deltaTime;
     AnimationSampler sampler = m_myAnimation.m_samplers[0];
     int nextKeyframe = -1;
 
-    for (int i = 0; sampler.timestamps.size(); i++) //Loop through sampler's timestamps to find next keyframe to animate
+    for (int i = 1; sampler.timestamps.size(); i++) //Loop through sampler's timestamps to find next keyframe to animate
     {
         if (sampler.timestamps[i] > animationTimer)
         {
@@ -187,15 +163,6 @@ void Scene::update(const float deltaTime)
     DirectX::XMVECTOR finalValue = DirectX::XMVectorLerp(prevValue, nextValue, t);
     DirectX::XMMATRIX translationMatrix2 = DirectX::XMMatrixTranslationFromVector(finalValue);
 
-    // Get objects's scene node and set its transform
-    // Updates the transform matrix for the object - this should be called after all transforms have been made
-    // Renders the object
-	//m_sceneSunBox.GetRootNode(0)->SetMatrix(finalMatrix);
-    //m_sceneSunBox.AnimateFrame(m_ctx); 
-    //m_sceneSunBox.RenderFrame(m_ctx, deltaTime); 
-	//m_scenePlanetBox.GetRootNode(0)->SetMatrix(worldPlanet);
-	//m_scenePlanetBox.AnimateFrame(m_ctx);
-	//m_scenePlanetBox.RenderFrame(m_ctx, deltaTime);
     m_sceneobject2.GetRootNode(0)->SetMatrix(translationMatrix2);
     m_sceneobject2.AnimateFrame(m_ctx);
     m_sceneobject2.RenderFrame(m_ctx, deltaTime);
