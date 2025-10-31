@@ -15,9 +15,14 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
 
     m_ctx.Init(device.Get(), context.Get(), renderer);
     //bool ok = m_sceneobject.LoadSphere(m_ctx);
-    bool ok = m_sceneobject.LoadGLTF(m_ctx, L"Resources\\sphere.gltf");
-    //bool ok = m_sceneobject.LoadGLTF(m_ctx, L"Resources\\FlightHelmet.gltf");
-    //bool ok = m_sceneobject.LoadGLTFWithSkeleton(m_ctx, L"Resources\\Fox.gltf");
+
+    //--- HIERARCHY CREATION START ---
+    SceneNode* bodyNode = m_sceneobject.CreateRootNode();
+    if (!bodyNode) return E_FAIL;
+    bodyNode->LoadSphere(m_ctx);
+    bodyNode->AddTranslation({ 0.0, 0, 2.0 });
+    SceneNode* headNode = bodyNode->CreateChildNode();
+    if (!headNode->LoadSphere(m_ctx));
 
     m_pCamera = new Camera(XMFLOAT3(0, 0, -6), XMFLOAT3(0, 0, 1), XMFLOAT3(0.0f, 1.0f, 0.0f), width, height);
     
