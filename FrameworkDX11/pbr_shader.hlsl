@@ -9,21 +9,7 @@ cbuffer ConstantBuffer : register( b0 )
 	float4 vOutputColor;
 }
 
-cbuffer ConstantBufferMaterials : register(b2)
-{
-    float roughnessBuffer;
-    float metallicBuffer;
-    int IBLTypeBuffer;
-}
-
 Texture2D albedoMap : register(t0);
-Texture2D roughnessMap : register(t1);
-Texture2D metallicMap : register(t2);
-Texture2D aoMap : register(t3);
-TextureCube iblSpecular : register(t4);
-TextureCube iblDiffuse : register(t5);
-TextureCube iblAlbedo : register(t6);
-
 SamplerState samLinear : register(s0);
 
 static const float PI = 3.14159265f;
@@ -99,8 +85,7 @@ float4 DoSpecular(Light lightObject, float3 pixelToEyeVectorNormalised, float3 p
         float3 reflection = reflect(-pixelToLightVectorNormalised, Normal);
         specular = pow(saturate(dot(reflection, pixelToEyeVectorNormalised)), 4); // 32 = specular power Material.SpecularPower
     }
-	
-    //return specular * 200;
+
 	return specular;
 }
 
@@ -175,173 +160,37 @@ PS_INPUT VS( VS_INPUT input )
 // Pixel Shader
 //--------------------------------------------------------------------------------------
 
-//Normal Distribution Function
-float CalculateNDF(float roughness, float3 N, float3 H)
-{
-    float roughnessSquare = roughness * roughness;
-	
-    float3 nDotHSquared = pow(dot(N, H), 2);
-    float3 aSquareMinus1 = roughnessSquare - 1;
-    float denominator = PI * pow((nDotHSquared * aSquareMinus1 + 1), 2);
-    float numerator = roughnessSquare;
-	
-    float retVal = numerator / denominator;
-    return retVal;
-}
-
-float G_sub(float3 N, float3 V, float k)
-{
-	//NOTE: Saturate N.V to remove sharp light borer
-    return saturate(dot(N, V)) / (dot(N, V) * (1 - k) + k);
-}
-
-float2 IntegrateBRDF(float NdotV, float roughness)
-{
-    const float4 c0 = float4(-1, -0.0275, -0.572, 0.022);
-    const float4 c1 = float4(1, 0.0425, 1.04, -0.04);
-
-    float4 r = roughness * c0 + c1;
-    float a004 = min(r.x * r.x, exp2(-9.28 * NdotV)) * r.x + r.y;
-    
-    return float2(-1.04, 1.04) * a004 + r.zw;
-}
-
 float4 PS_PBR(PS_INPUT IN) : SV_TARGET
-{	
-	//-----------------------------------------------[[[[PART - A: BRDF]]]]]----------------------------------------------
-    float3 albedo = albedoMap.Sample(samLinear, IN.Tex);
-    float3 metallic = metallicMap.Sample(samLinear, IN.Tex);
-    float roughness = roughnessMap.Sample(samLinear, IN.Tex);
-    float3 SkyColour = float3(0.2, 0.3, 0.5);
-    float3 GroundColour = float3(0.1, 0.05, 0);
-    float ao = aoMap.Sample(samLinear, IN.Tex);
-    float3 ambient = float3(0.01, 0.01, 0.01) * albedo * ao;
-    albedo = float3(1.0, 0.78, 0.34); // gold
-    //albedo = float3(1.0, 1.0, 1.0); // white
-    metallic = metallicBuffer;
-    roughness = roughnessBuffer;
-    SkyColour = float3(0.11, 0.11, 0.94); // A blue sky
-    GroundColour = float3(0.0, 0.33, 0.0); // A green groun
-	
-	//STEP 1: Calculate vectors
-    float3 N = normalize(IN.Norm);
-    float3 V = normalize(EyePosition - IN.worldPos); // View Direction
-    float3 L = normalize(Lights[0].Position - IN.worldPos); // Light Direction
-    float3 H = normalize(V + L); // Halfway Vector
-    float cosTheta = max(dot(N, V), 0.0);
-    float NdotL = max(dot(N, L), 0.0);
-	
-	//STEP 2: Fresnel calculation F0 where F0 = Constant in Dielectrics. For metals, its albedo.
-    float3 F0 = float3(0.04, 0.04, 0.04);
-    F0 = lerp(F0, albedo, metallic);
-    float3 F = F0 + (1 - F0) * pow(1 - cosTheta, 5); //Fresnel-Schlick's Approximation Function where F = Fsch = kS
-	
-	//STEP 3: Specular BRDF
-    float D = CalculateNDF(roughness, N, H); //Normal Distribution Function
-    float k = pow(roughness + 1, 2) / 8; 
-    float G = G_sub(L, N, roughness) * G_sub(V, N, roughness); //Geometry Smith Function
-    float3 specular = (D * G * F) / (4 * dot(N, L) * dot(N, V)); //Calculate Specular BRD
-
-	//STEP 4: Diffuse
-    float3 kD = (float3(1.0, 1.0, 1.0) - F) * float3(1.0 - metallic); //Diffuse Colour based on Fresnel term & Metallic Value
-    float3 diffuse = kD * albedo / PI;
-	
-	//STEP 5: Final Outgoing Light
-    float3 Lc = float3(1, 0, 0);     //Lighting Colour
-    float3 Lo = (diffuse + specular) * NdotL; //Outgoing Light
-    //float3 LoAmb = ambient + (Lo * Lc); //Outgoing Light with Ambient
+{
+    float3 finalColour = float4(1, 0, 0, 0);
     
-    
-    //-----------------------------------------------[[[[PART - B: ENVIRONMENTAL COLOUR]]]]]---------------------------------------------
-    float3 up = float3(0, 1, 0);
-    float3 finalIBL = float3(0, 0, 0);
-
-    int typeIBL = IBLTypeBuffer;
-    if (typeIBL == 0)
-    {
-        //Dim Ambient Light
-        float3 ambientLight = float3(0.1, 0.1, 0.1); 
-        finalIBL = ambientLight * albedo * kD;
-    }
-    else if (typeIBL == 1)
-    {
-        //Calculate Diffuse Ambient Light
-        float blend_factor = dot(N, up) * 0.5 + 0.5;
-        float3 diffuseLight = lerp(GroundColour, SkyColour, blend_factor);
-        
-        //Calculate Specular Ambient Light
-        float3 R = reflect(-V, N);
-        float specular_blend_factor = dot(R, up) * 0.5 + 0.5;
-        float3 specularLight = lerp(GroundColour, SkyColour, specular_blend_factor);
-        
-        //Combine Diffuse and Specular
-        float3 DiffuseContribution = kD * diffuseLight * albedo;
-        float3 SpecularContribution = F * specularLight;
-        finalIBL = DiffuseContribution + SpecularContribution;
-
-    }
-    else if (typeIBL == 2)
-    {
-        // Calculate Diffuse IBL
-        float3 irradiance = iblDiffuse.Sample(samLinear, N).rgb;
-        float diffuseIBL = kD * albedo * irradiance;
-        // Calculate Specular IBL
-        float3 R = reflect(-V, N);
-        static const int maxReflectionLOD = 10;
-        float prefilteredLOD = roughness * maxReflectionLOD; //Calculating Mip Level
-        float3 prefilteredColour = iblSpecular.SampleLevel(samLinear, R, prefilteredLOD).rgb;
-        float2 BRDF = IntegrateBRDF(cosTheta, roughness);
-        float specularIBL = prefilteredColour * (F * BRDF.x + BRDF.y);
-        finalIBL = (diffuseIBL + specularIBL) * albedo;
-    }
-    
-    float3 colour = finalIBL + Lo;
-    return float4(colour, 1.0);
+    return float4(finalColour, 1.0);
 }
-
 
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
+
 float4 PS_Normal(PS_INPUT IN) : SV_TARGET
 {
     float4 pixelToLightVectorNormalised = normalize(Lights[0].Position - IN.worldPos);
     float4 pixelToEyeVectorNormalised = normalize(EyePosition - IN.worldPos);
     float distanceFromPixelToLight = length(IN.worldPos - Lights[0].Position);
+	
     LightingResult lit = ComputeLighting(pixelToLightVectorNormalised, pixelToEyeVectorNormalised, distanceFromPixelToLight, normalize(IN.Norm));
 
 	// NOTE we aren't using any material properties just yet. 
     float4 ambient = GlobalAmbient;  
 	float4 diffuse = lit.Diffuse;
 	float4 specular = lit.Specular;
-	
-    //float2 mirroredCoords = float2(1 - IN.Tex.x, IN.Tex.y);
-    float4 texColor = albedoMap.Sample(samLinear, IN.Tex);
-    float4 texColor2 = roughnessMap.Sample(samLinear, IN.Tex);
-    float4 texColor3 = metallicMap.Sample(samLinear, IN.Tex);
-    float4 finalTexColor = texColor * texColor2 * texColor3;
-    //texColor = lerp(texColor, texColor2, 0.25);
-	
-    float4 diffuseColor = (ambient + diffuse + specular) * finalTexColor;
-    //return diffuseColor;	
-	
-	//TOON EFFECT 2 - View Based
-    float diffuseIntensity2 = dot(pixelToEyeVectorNormalised.xyz, normalize(IN.Norm));
-    if (diffuseIntensity2 > 0.8f) diffuseIntensity2 = 1.0f; // Brightest band
-    else if (diffuseIntensity2 > 0.4f) diffuseIntensity2 = 0.6f; // Mid-tone band
-    else diffuseIntensity2 = 0.2f; // Darkest band
-	
-    float4 finalColor = (ambient + (Lights[0].Color * diffuseIntensity2)) * float4(texColor.rgb, 1.0);
-	
-	//TOON EFFECT - Light Based
-    //float diffuseIntensity = saturate(dot(Lights[0].Direction, diffuse));
-    //if (diffuseIntensity > 0.8f) diffuseIntensity = 1.0f; // Brightest band
-    //else if (diffuseIntensity > 0.4f) diffuseIntensity = 0.6f; // Mid-tone band
-    //else diffuseIntensity = 0.2f; // Darkest band
-    //float4 finalColor = (ambient + (Lights[0].Color * diffuseIntensity)) * float4(texColor.rgb, 1.0);
-    return finalColor;
-}
 
+    float4 texColor;
+	texColor = albedoMap.Sample(samLinear, IN.Tex);
+	
+    float4 diffuseColor = (ambient + diffuse + specular) * texColor;
+	
+	return diffuseColor;
+}
 
 //--------------------------------------------------------------------------------------
 // PSSolid - render a solid color

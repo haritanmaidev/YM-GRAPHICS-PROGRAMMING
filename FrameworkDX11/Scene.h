@@ -41,38 +41,22 @@ public:
 	
 	const LightPropertiesConstantBuffer& getLightProperties() { return m_lightProperties; }
 
-	ConstantBufferMaterials& getMaterialProperties() { return m_materialProperties; }
-
-
 private:
 	void setupLightProperties();
 
 public:
 	Camera* m_pCamera;
-
+	
 	Microsoft::WRL::ComPtr <ID3D11Device>			m_pd3dDevice;
 	Microsoft::WRL::ComPtr <ID3D11DeviceContext>	m_pImmediateContext;
 	Microsoft::WRL::ComPtr <ID3D11Buffer>			m_pConstantBuffer;
 	Microsoft::WRL::ComPtr <ID3D11Buffer>			m_pLightConstantBuffer;
 	Microsoft::WRL::ComPtr <ID3D11Buffer>			m_pCustomConstantBuffer;
-	Microsoft::WRL::ComPtr <ID3D11Buffer>			m_pConstantBufferMaterials;
 
-	ConstantBufferMaterials m_materialProperties;
+
 	LightPropertiesConstantBuffer m_lightProperties;
 	IRenderingContext m_ctx;
-	
-	//Animation stuff
-	SceneGraph m_sceneobject2;
-	DirectX::XMFLOAT3 m_startPos = { -3.0f, 0.0f, 0.0f };
-	DirectX::XMFLOAT3 m_midPos = { 0.0f, 2.0f, 2.0f };
-	DirectX::XMFLOAT3 m_endPos = { 3.0f, 0.0f, 0.0f };
-	DirectX::XMFLOAT4 m_startRot;
-	DirectX::XMFLOAT4 m_endRot;
-	float m_t = 0.0f;
-	float m_t2 = 0.0f;
-	float animationTimer = 0.0f;
-	float m_direction = 1.0f; //To control ping pong anim
-	Animation m_myAnimation;
+	SceneGraph m_sceneobject;
 
 
 private:
@@ -83,7 +67,6 @@ private:
 	ID3D11ShaderResourceView* m_pTextureAmbientOcclusion;
 	ID3D11ShaderResourceView* m_pTextureSpecularIBL;
 	ID3D11ShaderResourceView* m_pTextureDiffuseIBL;
-	ID3D11ShaderResourceView* m_pTextureAlbedoIBL;
 
 	ID3D11SamplerState* m_pSamplerLinear;
 };

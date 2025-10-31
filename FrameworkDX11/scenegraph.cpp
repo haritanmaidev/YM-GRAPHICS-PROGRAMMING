@@ -106,6 +106,15 @@ SceneGraph::~SceneGraph()
     Destroy();
 }
 
+SceneNode* SceneGraph::CreateRootNode()
+{
+    // Add a new root node to our vector of root nodes
+    mRootNodes.emplace_back(true); // 'true' means this is a root node
+    // Return a pointer to the new node we just created
+    return &mRootNodes.back();
+}
+
+
 
 bool SceneGraph::Init(IRenderingContext &ctx)
 {
@@ -642,12 +651,14 @@ void SceneGraph::RenderNode(IRenderingContext &ctx,
     if (!ctx.IsValid())
         return;
 
-    XMMATRIX world = node.mWorldMtrx * parentWorldMtrx;
+    XMMATRIX matWorld = XMLoadFloat4x4(&node.mWorldMtrx);
+
+    XMMATRIX world = matWorld * parentWorldMtrx;
     ConstantBuffer* data = &ctx.getDXRenderer()->m_ConstantBufferData;
     if (node.m_skeleton.IsLoaded())
     {
         if (node.m_skeleton.CurrentAnimation() == nullptr)
-            node.m_skeleton.PlayAnimation(0);
+            node.m_skeleton.PlayAnimation((unsigned int)0);
         node.m_skeleton.Update(deltaTime);
         data->bone_count = node.m_skeleton.GetBoneCount();
         node.m_skeleton.GetSkinningMatrices(data->boneTransforms, max_bones);
@@ -1831,10 +1842,20 @@ void ScenePrimitive::DrawGeometry(IRenderingContext &ctx, ID3D11InputLayout* ver
 
 
 SceneNode::SceneNode(bool isRootNode) :
-    mIsRootNode(isRootNode),
-    mLocalMtrx(XMMatrixIdentity()),
-    mWorldMtrx(XMMatrixIdentity())
-{}
+    mIsRootNode(isRootNode)
+{
+    XMStoreFloat4x4(&mLocalMtrx, XMMatrixIdentity());
+    XMStoreFloat4x4(&mWorldMtrx, XMMatrixIdentity());
+}
+
+SceneNode* SceneNode::CreateChildNode()
+{
+    // Add a new child node to this node's vector of children
+    mChildren.emplace_back(false); // 'false' means this is not a root node
+    // Return a pointer to the new child
+    return &mChildren.back();
+}
+
 
 ScenePrimitive* SceneNode::CreateEmptyPrimitive()
 {
@@ -1848,7 +1869,11 @@ ScenePrimitive* SceneNode::CreateEmptyPrimitive()
 
 void SceneNode::SetIdentity()
 {
-    mLocalMtrx = XMMatrixIdentity();
+    // 1. Create an aligned, local identity matrix
+    XMMATRIX identity = XMMatrixIdentity();
+
+    // 2. Store that aligned matrix into your unaligned class member
+    XMStoreFloat4x4(&mLocalMtrx, identity);
 }
 
 void SceneNode::AddScale(double scale)
@@ -1856,82 +1881,151 @@ void SceneNode::AddScale(double scale)
     AddScale({ scale, scale, scale });
 }
 
-void SceneNode::AddScale(const std::vector<double> &vec)
+void SceneNode::AddScale(const std::vector<double>& vec)
 {
+    // --- Error Checking (No change needed) ---
     if (vec.size() != 3)
     {
         if (vec.size() != 0)
             Log::Warning(L"SceneNode::AddScale: vector of incorrect size (%d instead of 3)",
-                         vec.size());
+                vec.size());
         return;
     }
 
-    const auto mtrx = XMMatrixScaling((float)vec[0], (float)vec[1], (float)vec[2]);
+    // --- Load ---
+    // 1. Load the unaligned member variable into an aligned local XMMATRIX.
+    XMMATRIX localMtrx = XMLoadFloat4x4(&mLocalMtrx);
 
-    mLocalMtrx = mLocalMtrx * mtrx;
+    // --- Compute ---
+    // 2. Create the new scaling matrix (this is also an aligned local).
+    XMMATRIX scaleMtrx = XMMatrixScaling((float)vec[0], (float)vec[1], (float)vec[2]);
+
+    // 3. Perform the multiplication using only aligned local variables.
+    localMtrx = XMMatrixMultiply(localMtrx, scaleMtrx);
+
+    // --- Store ---
+    // 4. Store the aligned result back into the unaligned member variable.
+    XMStoreFloat4x4(&mLocalMtrx, localMtrx);
 }
 
 void SceneNode::AddMatrix(const XMMATRIX& matrix)
-{
-    mLocalMtrx = mLocalMtrx * matrix;
+{   
+    // 1. Load
+    XMMATRIX local = XMLoadFloat4x4(&mLocalMtrx);
+
+    // 2. Compute
+    local = XMMatrixMultiply(local, matrix);
+
+    // 3. Store
+    XMStoreFloat4x4(&mLocalMtrx, local);
 }
 
-void SceneNode::SetMatrix(const XMMATRIX& matrix)
+void SceneNode::SetMatrix(FXMMATRIX matrix)
 {
-    mLocalMtrx = matrix;
+    XMStoreFloat4x4(&mLocalMtrx, matrix);
 }
 
 
-void SceneNode::AddRotationQuaternion(const std::vector<double> &vec)
+void SceneNode::AddRotationQuaternion(const std::vector<double>& vec)
 {
+    // --- Error Checking (No change needed) ---
     if (vec.size() != 4)
     {
         if (vec.size() != 0)
             Log::Warning(L"SceneNode::AddRotationQuaternion: vector of incorrect size (%d instead of 4)",
-                         vec.size());
+                vec.size());
         return;
     }
 
-    const XMFLOAT4 quaternion((float)vec[0], (float)vec[1], (float)vec[2], (float)vec[3]);
-    auto xmQuaternion = XMLoadFloat4(&quaternion);
-    xmQuaternion = XMQuaternionNormalize(xmQuaternion);
-    const auto mtrx = XMMatrixRotationQuaternion(xmQuaternion);
+    // --- Load ---
+    // 1. Load the unaligned member variable into an aligned local XMMATRIX.
+    XMMATRIX localMtrx = XMLoadFloat4x4(&mLocalMtrx);
 
-    mLocalMtrx = mLocalMtrx * mtrx;
+    // --- Compute ---
+    // 2. Load and normalize the quaternion (using aligned XMVECTOR).
+    // Note: XMVectorSet is often faster than creating an XMFLOAT4 and loading it.
+    XMVECTOR xmQuaternion = XMVectorSet((float)vec[0], (float)vec[1], (float)vec[2], (float)vec[3]);
+    xmQuaternion = XMQuaternionNormalize(xmQuaternion);
+
+    // 3. Create the rotation matrix from the normalized quaternion.
+    XMMATRIX rotationMtrx = XMMatrixRotationQuaternion(xmQuaternion);
+
+    // 4. Multiply the matrices (using only aligned local variables).
+    localMtrx = XMMatrixMultiply(localMtrx, rotationMtrx);
+
+    // --- Store ---
+    // 5. Store the aligned result back into the unaligned member variable.
+    XMStoreFloat4x4(&mLocalMtrx, localMtrx);
 }
 
-void SceneNode::AddTranslation(const std::vector<double> &vec)
+void SceneNode::AddTranslation(const std::vector<double>& vec)
 {
+    // --- Error Checking ---
     if (vec.size() != 3)
     {
         if (vec.size() != 0)
             Log::Warning(L"SceneNode::AddTranslation: vector of incorrect size (%d instead of 3)",
-                         vec.size());
+                vec.size());
         return;
     }
 
-    const auto mtrx = XMMatrixTranslation((float)vec[0], (float)vec[1], (float)vec[2]);
+    // --- Load ---
+    // 1. Load the unaligned member variable into an aligned local XMMATRIX.
+    XMMATRIX localMtrx = XMLoadFloat4x4(&mLocalMtrx);
 
-    mLocalMtrx = mLocalMtrx * mtrx;
+    // --- Compute ---
+    // 2. Create the new translation matrix (this is also an aligned local).
+    XMMATRIX translationMtrx = XMMatrixTranslation((float)vec[0], (float)vec[1], (float)vec[2]);
+
+    // 3. Perform the multiplication using only aligned local variables.
+    localMtrx = XMMatrixMultiply(localMtrx, translationMtrx);
+
+    // --- Store ---
+    // 4. Store the aligned result back into the unaligned member variable.
+    XMStoreFloat4x4(&mLocalMtrx, localMtrx);
 }
 
-void SceneNode::AddMatrix(const std::vector<double> &vec)
+void SceneNode::AddMatrix(const std::vector<double>& vec)
 {
+    
     if (vec.size() != 16)
     {
         if (vec.size() != 0)
             Log::Warning(L"SceneNode::AddMatrix: vector of incorrect size (%d instead of 16)",
-                         vec.size());
+                vec.size());
         return;
     }
 
-    const auto mtrx = XMMatrixSet(
-        (float)vec[0],  (float)vec[1],  (float)vec[2],  (float)vec[3],
-        (float)vec[4],  (float)vec[5],  (float)vec[6],  (float)vec[7],
-        (float)vec[8],  (float)vec[9],  (float)vec[10], (float)vec[11],
+    // --- Compute (Part 1: Create New Matrix) ---
+    // 1. Create the new matrix from the vector.
+    //    (This is already an aligned, local XMMATRIX, so it's safe).
+    const XMMATRIX newMtrx = XMMatrixSet(
+        (float)vec[0], (float)vec[1], (float)vec[2], (float)vec[3],
+        (float)vec[4], (float)vec[5], (float)vec[6], (float)vec[7],
+        (float)vec[8], (float)vec[9], (float)vec[10], (float)vec[11],
         (float)vec[12], (float)vec[13], (float)vec[14], (float)vec[15]);
 
-    mLocalMtrx = mLocalMtrx * mtrx;
+    // --- Load ---
+    // 2. Load the unaligned member variable into an aligned local XMMATRIX.
+    XMMATRIX localMtrx = XMLoadFloat4x4(&mLocalMtrx);
+
+    // --- Compute (Part 2: Combine) ---
+    // 3. Perform the multiplication using only aligned local variables.
+    localMtrx = XMMatrixMultiply(localMtrx, newMtrx);
+
+    // --- Store ---
+    // 4. Store the aligned result back into the unaligned member variable.
+    XMStoreFloat4x4(&mLocalMtrx, localMtrx);
+}
+
+bool SceneNode::LoadCube(IRenderingContext& ctx)
+{
+    ScenePrimitive cube;
+    bool ok = cube.CreateCube(ctx);
+
+    mPrimitives.push_back(std::move(cube));
+
+    return ok;
 }
 
 bool SceneNode::LoadSphere(IRenderingContext& ctx)

@@ -46,8 +46,14 @@ public:
 
     unsigned int GetAnimationCount() { return m_animationCount; }
     void PlayAnimation(const unsigned int animation);
+    void PlayAnimation(Animation* anim);
     bool IsLoaded() { return m_isLoaded; }
     Animation* CurrentAnimation() { return m_pCurrentAnimation; }
+
+    int AddJoint(int parentIndex, const DirectX::XMFLOAT4X4& localBindTransform);
+    Joint* GetJoint(unsigned int joint) {
+        return &m_joints[joint];
+    }
 
 private:
     // Change the signature to accept a pointer.

@@ -153,9 +153,11 @@ public:
     void AddMatrix(const XMMATRIX& matrix);
     void AddTranslation(const std::vector<double> &vec);
     void AddMatrix(const std::vector<double> &vec);
-    void SetMatrix(const XMMATRIX& matrix);
+    //void SetMatrix(const XMMATRIX& matrix);
+    void SetMatrix(FXMMATRIX matrix);
 
     bool LoadSphere(IRenderingContext& ctx);
+    bool LoadCube(IRenderingContext& ctx);
 
 
     bool LoadFromGLTF(IRenderingContext & ctx,
@@ -166,10 +168,17 @@ public:
 
     void Animate(IRenderingContext &ctx);
 
-    XMMATRIX GetWorldMtrx() const { return mWorldMtrx; }
+    XMMATRIX GetWorldMtrx() const
+    {
+        // Load the unaligned member into an aligned local XMMATRIX
+        return XMLoadFloat4x4(&mWorldMtrx);
+    }
     Skeleton* GetSkeleton() {
         return &m_skeleton;
     }
+
+    SceneNode* CreateChildNode();
+    SceneNode* GetChildNode(const unsigned int i) { return &mChildren[i]; }
 
 private:
     friend class SceneGraph;
@@ -179,8 +188,8 @@ private:
 
 private:
     bool        mIsRootNode;
-    XMMATRIX    mLocalMtrx;
-    XMMATRIX    mWorldMtrx;
+    XMFLOAT4X4   mLocalMtrx; // <-- Changed from XMMATRIX
+    XMFLOAT4X4   mWorldMtrx; // <-- Changed from XMMATRIX
 };
 
 class SceneGraph : public IScene
@@ -219,8 +228,8 @@ public:
 
 
     void AnimateFrame(IRenderingContext& ctx);
-
-    SceneNode* GetRootNode(int index) { return &mRootNodes[index]; }
+    SceneNode* CreateRootNode();
+    SceneNode* GetRootNode(unsigned int i) { return &mRootNodes[i]; }
 
 
 private:
