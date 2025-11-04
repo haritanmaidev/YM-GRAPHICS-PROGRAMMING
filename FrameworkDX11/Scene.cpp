@@ -14,15 +14,20 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
     HRESULT hr;
 
     m_ctx.Init(device.Get(), context.Get(), renderer);
-    //bool ok = m_sceneobject.LoadSphere(m_ctx);
 
     //--- HIERARCHY CREATION START ---
     SceneNode* bodyNode = m_sceneobject.CreateRootNode();
     if (!bodyNode) return E_FAIL;
     bodyNode->LoadSphere(m_ctx);
+    bodyNode->AddScale(1.5);
     bodyNode->AddTranslation({ 0.0, 0, 2.0 });
     SceneNode* headNode = bodyNode->CreateChildNode();
+    if (!headNode) return E_FAIL;
     if (!headNode->LoadSphere(m_ctx));
+    headNode->AddTranslation({0, 1.5, 0});
+    headNode->AddScale(0.75);
+
+    // --- HIERARCHY CREATION END ---
 
     m_pCamera = new Camera(XMFLOAT3(0, 0, -6), XMFLOAT3(0, 0, 1), XMFLOAT3(0.0f, 1.0f, 0.0f), width, height);
     
