@@ -501,8 +501,9 @@ void DX11Renderer::dragIMGUIdraw()
 {
     ConstantBufferMaterials& matProp = m_pScene->getMaterialProperties();
 
-    ImGui::SliderFloat("Roughness", &matProp.Roughness, 0.0f, 1.0f);
-    ImGui::SliderFloat("Metallic", &matProp.Metallic, 0.0f, 1.0f);
+    ImGui::ColorEdit3("Albedo", &matProp.Albedo.x);
+    ImGui::SliderFloat("Roughness", &matProp.Roughness, -1.0f, 1.0f);
+    ImGui::SliderFloat("Metallic", &matProp.Metallic, -1.0f, 1.0f);
 	ImGui::RadioButton("IBL 0", &matProp.IBLType, 0); ImGui::SameLine();
     ImGui::RadioButton("IBL 1", &matProp.IBLType, 1); ImGui::SameLine();
     ImGui::RadioButton("IBL 2", &matProp.IBLType, 2);

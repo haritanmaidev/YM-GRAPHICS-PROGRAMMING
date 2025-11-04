@@ -9,7 +9,6 @@ using namespace DirectX;
 // Structures
 //--------------------------------------------------------------------------------------
 
-
 struct ConstantBuffer
 {
 	XMMATRIX mWorld;
@@ -22,14 +21,14 @@ struct ConstantBuffer
 
 struct ConstantBufferMaterials 
 {
-	ConstantBufferMaterials(): Roughness(0.1f), Metallic(0.9f), IBLType(2) {}
+	ConstantBufferMaterials() : Albedo{ 1.0f, 0.0f, 0.2f }, Roughness(0.1f), Metallic(0.9f), IBLType(2) {}
+	XMFLOAT3 Albedo;
+	float padding2;
 	float Roughness;
 	float Metallic;
 	int IBLType;
 	float Padding; // Padding to make size a multiple of 16 bytes
 };
-
-
 
 enum LightType
 {

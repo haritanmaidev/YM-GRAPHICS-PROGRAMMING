@@ -41,6 +41,7 @@ public:
 	
 	const LightPropertiesConstantBuffer& getLightProperties() { return m_lightProperties; }
 
+	//IMGUI
 	ConstantBufferMaterials& getMaterialProperties() { return m_materialProperties; }
 
 
@@ -48,16 +49,17 @@ private:
 	void setupLightProperties();
 
 public:
-	Camera* m_pCamera;
+	//IMGUI
+	Microsoft::WRL::ComPtr <ID3D11Buffer>m_pConstantBufferMaterials;
+	ConstantBufferMaterials m_materialProperties;
 
+	Camera* m_pCamera;
 	Microsoft::WRL::ComPtr <ID3D11Device>			m_pd3dDevice;
 	Microsoft::WRL::ComPtr <ID3D11DeviceContext>	m_pImmediateContext;
 	Microsoft::WRL::ComPtr <ID3D11Buffer>			m_pConstantBuffer;
 	Microsoft::WRL::ComPtr <ID3D11Buffer>			m_pLightConstantBuffer;
 	Microsoft::WRL::ComPtr <ID3D11Buffer>			m_pCustomConstantBuffer;
-	Microsoft::WRL::ComPtr <ID3D11Buffer>			m_pConstantBufferMaterials;
 
-	ConstantBufferMaterials m_materialProperties;
 	LightPropertiesConstantBuffer m_lightProperties;
 	IRenderingContext m_ctx;
 	

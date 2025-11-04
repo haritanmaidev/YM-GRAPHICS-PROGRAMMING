@@ -11,9 +11,12 @@ cbuffer ConstantBuffer : register( b0 )
 
 cbuffer ConstantBufferMaterials : register(b2)
 {
+    float3 albedoBuffer;
+    float padding2;
     float roughnessBuffer;
     float metallicBuffer;
     int IBLTypeBuffer;
+    float Padding;
 }
 
 Texture2D albedoMap : register(t0);
@@ -175,9 +178,9 @@ PS_INPUT VS( VS_INPUT input )
 // Pixel Shader
 //--------------------------------------------------------------------------------------
 
-//Normal Distribution Function
 float CalculateNDF(float roughness, float3 N, float3 H)
 {
+    //Normal Distribution Function
     float roughnessSquare = roughness * roughness;
 	
     float3 nDotHSquared = pow(dot(N, H), 2);
@@ -209,6 +212,7 @@ float2 IntegrateBRDF(float NdotV, float roughness)
 float4 PS_PBR(PS_INPUT IN) : SV_TARGET
 {	
 	//-----------------------------------------------[[[[PART - A: BRDF]]]]]----------------------------------------------
+    
     float3 albedo = albedoMap.Sample(samLinear, IN.Tex);
     float3 metallic = metallicMap.Sample(samLinear, IN.Tex);
     float roughness = roughnessMap.Sample(samLinear, IN.Tex);
@@ -216,12 +220,17 @@ float4 PS_PBR(PS_INPUT IN) : SV_TARGET
     float3 GroundColour = float3(0.1, 0.05, 0);
     float ao = aoMap.Sample(samLinear, IN.Tex);
     float3 ambient = float3(0.01, 0.01, 0.01) * albedo * ao;
-    albedo = float3(1.0, 0.78, 0.34); // gold
+    SkyColour = float3(0.11, 0.11, 0.94); // A blue sky
+    GroundColour = float3(0.0, 0.33, 0.0); // A green ground
+    //albedo = float3(1.0, 0.78, 0.34); // gold
     //albedo = float3(1.0, 1.0, 1.0); // white
+    
+    //IMGUI Values
+    albedo.x = albedoBuffer[0];
+    albedo.y = albedoBuffer[1];
+    albedo.z = albedoBuffer[2];
     metallic = metallicBuffer;
     roughness = roughnessBuffer;
-    SkyColour = float3(0.11, 0.11, 0.94); // A blue sky
-    GroundColour = float3(0.0, 0.33, 0.0); // A green groun
 	
 	//STEP 1: Calculate vectors
     float3 N = normalize(IN.Norm);
