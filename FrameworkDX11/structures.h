@@ -23,11 +23,11 @@ struct ConstantBufferMaterials
 {
 	ConstantBufferMaterials() : Albedo{ 1.0f, 0.0f, 0.2f }, Roughness(0.1f), Metallic(0.9f), IBLType(2) {}
 	XMFLOAT3 Albedo;
-	float padding2;
+	float padding;
 	float Roughness;
 	float Metallic;
 	int IBLType;
-	float Padding; // Padding to make size a multiple of 16 bytes
+	float padding2; 
 };
 
 enum LightType
