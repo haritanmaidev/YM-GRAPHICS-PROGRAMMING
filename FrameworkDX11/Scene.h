@@ -59,13 +59,14 @@ public:
 
 	// Animation matrix values and stuff
 	Animation m_AnimationClass;
-	
-	float t = 0.0f;
-	float animationTimer = 0.0f;
-	DirectX::XMFLOAT3 m_startPos = { 0.0f, 0.0f, 0.0f };
+	AnimationChannel m_AnimationChannel;
+
+	DirectX::XMFLOAT3 m_startPos = { -3.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT3 m_endPos = { 3.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT4 m_startRot = { 0.0f, 0.0f, 0.0f, 1.0f };
 	DirectX::XMFLOAT4 m_endRot = { 0.0f, 0.0f, 90.0f, 1.0f };
+
+	float animationTimer = 0.0f;
 
 
 private:

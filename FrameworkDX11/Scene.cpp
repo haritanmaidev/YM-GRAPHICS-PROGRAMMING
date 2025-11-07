@@ -17,7 +17,6 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
 
 
     //---------------------|||[[[[[ HIERARCHY CREATION START ]]]]]|||---------------------
-    Animation animClass;
     //PARENT NODE INITIALIZATION
     SceneNode* bodyNode = m_sceneobject.CreateRootNode();
     if (!bodyNode) return E_FAIL;
@@ -25,23 +24,23 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
     bodyNode->AddScale(1.5);
     bodyNode->AddTranslation({ 0.0, 0, 2.0 });
     //Parent node: translation logic
-    AnimationChannel translationChannel1;
-    AnimationSampler translation3DSampler1;
-    translation3DSampler1.vec3_values.push_back(m_startPos);// Setting position keyframes
-    translation3DSampler1.vec3_values.push_back(m_endPos);
-	translation3DSampler1.timestamps.push_back(0.0f);// Setting time keyframes for each keyframe
-	translation3DSampler1.timestamps.push_back(2.0f);
-	animClass.m_samplers.push_back(translation3DSampler1);
-    animClass.m_channels.push_back({ translationChannel1.TRANSLATION, 1, 0 });
+    AnimationChannel channel0translation;
+    AnimationSampler sampler0Translation;
+    sampler0Translation.vec3_values.push_back(m_startPos);// Setting position keyframes
+    sampler0Translation.vec3_values.push_back(m_endPos);
+	sampler0Translation.timestamps.push_back(0.0f);// Setting time keyframes for each keyframe
+	sampler0Translation.timestamps.push_back(2.0f);
+	m_AnimationClass.m_samplers.push_back(sampler0Translation);
+    m_AnimationClass.m_channels.push_back({ channel0translation.TRANSLATION, 0, 0 });
     //Parent node: rotation logic
-    AnimationChannel rotationChannel1;
-	AnimationSampler rotation4DSampler1;
-	rotation4DSampler1.vec4_values.push_back(m_startRot);//Rotation keyframes
-    rotation4DSampler1.vec4_values.push_back(m_endRot);
-    rotation4DSampler1.timestamps.push_back(0.0f); // Rotation timestamps of each keyframe
-    rotation4DSampler1.timestamps.push_back(2.0f);
-	animClass.m_samplers.push_back(rotation4DSampler1);
-	animClass.m_channels.push_back({ rotationChannel1.ROTATION, 1, 1 });
+    AnimationChannel channel1Rotation;
+	AnimationSampler sampler1Rotation;
+	sampler1Rotation.vec4_values.push_back(m_startRot);//Rotation keyframes
+    sampler1Rotation.vec4_values.push_back(m_endRot);
+    sampler1Rotation.timestamps.push_back(0.0f); // Rotation timestamps of each keyframe
+    sampler1Rotation.timestamps.push_back(2.0f);
+    m_AnimationClass.m_samplers.push_back(sampler1Rotation);
+    m_AnimationClass.m_channels.push_back({ channel1Rotation.ROTATION, 0, 1 });
 
     //CHILD NODE INITIALIZATION
     SceneNode* headNode = bodyNode->CreateChildNode();
@@ -136,12 +135,11 @@ void Scene::update(const float deltaTime)
 
     //-----------------------------------------|||[[[[[ ANIMATION LOGIC HERE]]]]]|||-----------------------------------------
     animationTimer += deltaTime;
-    
     //Loop through channels and their samplers, then their samplers timestamps to set the animation
     for (int channel = 0; channel < m_AnimationClass.m_channels.size(); channel++) 
     {
-        AnimationSampler sampler = m_AnimationClass.m_samplers[channel];
         int nextKeyFrame = -1;
+        AnimationSampler sampler = m_AnimationClass.m_samplers[channel];
 
         for (int i = 0; i < sampler.timestamps.size(); i++) 
         {
@@ -152,12 +150,21 @@ void Scene::update(const float deltaTime)
             }
         }
 
+        //Keyframe to play, based on timestamp and t value(progress variable)
         if (nextKeyFrame == -1 || nextKeyFrame == 0) nextKeyFrame = 1;
+        int prevKeyFrame = nextKeyFrame - 1;
+        float prevTime = sampler.timestamps[prevKeyFrame];
+        float nextTime = sampler.timestamps[nextKeyFrame];
+        float t = (animationTimer - prevTime) / (nextTime - prevTime);
+        if (animationTimer >= nextTime) animationTimer = 0; //Reset or Loop the animation if its finished
+        
+        DirectX::XMVECTOR prevValue = DirectX::XMLoadFloat3(&sampler.vec3_values[prevKeyFrame]);
+        DirectX::XMVECTOR nextValue = DirectX::XMLoadFloat3(&sampler.vec3_values[nextKeyFrame]);
+        DirectX::XMVECTOR finalValue = DirectX::XMVectorLerp(prevValue, nextValue, t);
+        DirectX::XMMATRIX translationMatrix = DirectX::XMMatrixTranslationFromVector(finalValue);
+
+        m_sceneobject.GetRootNode(0)->SetMatrix(translationMatrix);
+        m_sceneobject.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made 
+        m_sceneobject.RenderFrame(m_ctx, deltaTime); // renders the object
     }
-
-
-    // scene object 1 
-    m_sceneobject.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made 
-    m_sceneobject.RenderFrame(m_ctx, deltaTime); // renders the object
-
 }
