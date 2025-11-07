@@ -49,4 +49,5 @@ public:
     std::vector<AnimationSampler> m_samplers;
     std::vector<AnimationChannel> m_channels;
     std::string m_name;
+
 };

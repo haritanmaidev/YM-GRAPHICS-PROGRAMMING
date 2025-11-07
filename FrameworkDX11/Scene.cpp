@@ -15,23 +15,44 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
 
     m_ctx.Init(device.Get(), context.Get(), renderer);
 
-    //--- HIERARCHY CREATION START ---
+
+    //---------------------|||[[[[[ HIERARCHY CREATION START ]]]]]|||---------------------
+    Animation animClass;
+    //PARENT NODE INITIALIZATION
     SceneNode* bodyNode = m_sceneobject.CreateRootNode();
     if (!bodyNode) return E_FAIL;
     bodyNode->LoadSphere(m_ctx);
     bodyNode->AddScale(1.5);
     bodyNode->AddTranslation({ 0.0, 0, 2.0 });
+    //Parent node: translation logic
+    AnimationChannel translationChannel1;
+    AnimationSampler translation3DSampler1;
+    translation3DSampler1.vec3_values.push_back(m_startPos);// Setting position keyframes
+    translation3DSampler1.vec3_values.push_back(m_endPos);
+	translation3DSampler1.timestamps.push_back(0.0f);// Setting time keyframes for each keyframe
+	translation3DSampler1.timestamps.push_back(2.0f);
+	animClass.m_samplers.push_back(translation3DSampler1);
+    animClass.m_channels.push_back({ translationChannel1.TRANSLATION, 1, 0 });
+    //Parent node: rotation logic
+    AnimationChannel rotationChannel1;
+	AnimationSampler rotation4DSampler1;
+	rotation4DSampler1.vec4_values.push_back(m_startRot);//Rotation keyframes
+    rotation4DSampler1.vec4_values.push_back(m_endRot);
+    rotation4DSampler1.timestamps.push_back(0.0f); // Rotation timestamps of each keyframe
+    rotation4DSampler1.timestamps.push_back(2.0f);
+	animClass.m_samplers.push_back(rotation4DSampler1);
+	animClass.m_channels.push_back({ rotationChannel1.ROTATION, 1, 1 });
+
+    //CHILD NODE INITIALIZATION
     SceneNode* headNode = bodyNode->CreateChildNode();
     if (!headNode) return E_FAIL;
     if (!headNode->LoadSphere(m_ctx));
     headNode->AddTranslation({0, 1.5, 0});
     headNode->AddScale(0.75);
-
-    // --- HIERARCHY CREATION END ---
+    //---------------------|||[[[[[ HIERARCHY CREATION END ]]]]]|||---------------------
 
     m_pCamera = new Camera(XMFLOAT3(0, 0, -6), XMFLOAT3(0, 0, 1), XMFLOAT3(0.0f, 1.0f, 0.0f), width, height);
     
-
     // Create the constant buffer
     D3D11_BUFFER_DESC bd = {};
     bd.Usage = D3D11_USAGE_DEFAULT;
@@ -69,8 +90,6 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
     hr = m_pd3dDevice->CreateSamplerState(&sampDesc, &m_pSamplerLinear);
 
-    
-
     return S_OK;
 }
 
@@ -104,12 +123,10 @@ void Scene::update(const float deltaTime)
     m_pImmediateContext->PSSetShaderResources(0, 1, &m_pTextureDiffuse);
     m_pImmediateContext->PSSetSamplers(0, 1, &m_pSamplerLinear);
 
-
     ConstantBuffer cb1;
     cb1.mView = XMMatrixTranspose(getCamera()->getViewMatrix());
     cb1.mProjection = XMMatrixTranspose(getCamera()->getProjectionMatrix());
     cb1.vOutputColor = XMFLOAT4(0, 0, 0, 0);
-
 
     m_lightProperties.EyePosition = XMFLOAT4(m_pCamera->getPosition().x, m_pCamera->getPosition().y, m_pCamera->getPosition().z, 1);
 
@@ -117,9 +134,30 @@ void Scene::update(const float deltaTime)
     ID3D11Buffer* buf = m_pLightConstantBuffer.Get();
     m_pImmediateContext->PSSetConstantBuffers(1, 1, &buf);
 
-    // scene object 1 
-    m_sceneobject.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made
+    //-----------------------------------------|||[[[[[ ANIMATION LOGIC HERE]]]]]|||-----------------------------------------
+    animationTimer += deltaTime;
     
+    //Loop through channels and their samplers, then their samplers timestamps to set the animation
+    for (int channel = 0; channel < m_AnimationClass.m_channels.size(); channel++) 
+    {
+        AnimationSampler sampler = m_AnimationClass.m_samplers[channel];
+        int nextKeyFrame = -1;
+
+        for (int i = 0; i < sampler.timestamps.size(); i++) 
+        {
+            if (sampler.timestamps[i] > animationTimer) 
+            {
+                nextKeyFrame = i;
+                break;
+            }
+        }
+
+        if (nextKeyFrame == -1 || nextKeyFrame == 0) nextKeyFrame = 1;
+    }
+
+
+    // scene object 1 
+    m_sceneobject.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made 
     m_sceneobject.RenderFrame(m_ctx, deltaTime); // renders the object
 
 }
