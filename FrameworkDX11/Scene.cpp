@@ -84,7 +84,6 @@ void Scene::setupLightProperties()
     m_lightProperties.Lights[0] = light;
 }
 
-
 HRESULT Scene::AnimationHierarchyInit()
 {
     //---------------------|||[[[[[ HIERARCHY CREATION START ]]]]]|||---------------------
@@ -94,6 +93,7 @@ HRESULT Scene::AnimationHierarchyInit()
     sunNode->LoadSphere(m_ctx);
     sunNode->AddScale(1.5);
     sunNode->AddTranslation({ 0.0, 0, 2.0 });
+
     //Parent node: translation logic
     AnimationChannel channel0translation;
     AnimationSampler sampler0Translation;
@@ -103,9 +103,12 @@ HRESULT Scene::AnimationHierarchyInit()
     sampler0Translation.timestamps.push_back(2.0f);
     m_AnimationClass.m_samplers.push_back(sampler0Translation);
     m_AnimationClass.m_channels.push_back({ channel0translation.TRANSLATION, 0, 0 });
+
     //Parent node: rotation logic
     AnimationChannel channel1Rotation;
     AnimationSampler sampler1Rotation;
+    DirectX::XMStoreFloat4(&m_startRotSun, DirectX::XMQuaternionIdentity());
+    DirectX::XMStoreFloat4(&m_endRotSun, DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), DirectX::XM_PI));
     sampler1Rotation.vec4_values.push_back(m_startRotSun);//Rotation keyframes
     sampler1Rotation.vec4_values.push_back(m_endRotSun);
     sampler1Rotation.timestamps.push_back(0.0f); // Rotation timestamps of each keyframe
@@ -113,33 +116,32 @@ HRESULT Scene::AnimationHierarchyInit()
     m_AnimationClass.m_samplers.push_back(sampler1Rotation);
     m_AnimationClass.m_channels.push_back({ channel1Rotation.ROTATION, 0, 1 });
 
-    //CHILD NODE INITIALIZATION
-    SceneNode* planetOneNode = sunNode->CreateChildNode();
-    if (!planetOneNode) return E_FAIL;
-    if (!planetOneNode->LoadSphere(m_ctx));
-    planetOneNode->AddTranslation({ 0, 1.5, 0 });
-    planetOneNode->AddScale(0.75);
-    //Child one node: translation logic
-    AnimationChannel channel2translation;
-    AnimationSampler sampler2Translation;
-    sampler2Translation.vec3_values.push_back(m_startPosChild1);
-    sampler2Translation.vec3_values.push_back({ m_endPosChild1 });
-    sampler2Translation.timestamps.push_back(0.0f);
-    sampler2Translation.timestamps.push_back(2.0f);
-    m_AnimationClass.m_samplers.push_back(sampler2Translation);
-    m_AnimationClass.m_channels.push_back({ channel2translation.ROTATION, 1, 2 });
-    //Child one node: rotation logic
-    AnimationChannel channel3Rotation;
-    AnimationSampler sampler3Rotation;
-    sampler3Rotation.vec4_values.push_back({ m_startRotChild1 });
-    sampler3Rotation.vec4_values.push_back({ m_endRotChild1 });
-    sampler3Rotation.timestamps.push_back(0.0f);
-    sampler3Rotation.timestamps.push_back(2.0f);
-    m_AnimationClass.m_samplers.push_back(sampler2Translation);
-    m_AnimationClass.m_channels.push_back({ channel2translation.ROTATION, 1, 2 });
+    ////CHILD NODE INITIALIZATION
+    //SceneNode* planetOneNode = sunNode->CreateChildNode();
+    //if (!planetOneNode) return E_FAIL;
+    //if (!planetOneNode->LoadSphere(m_ctx));
+    //planetOneNode->AddTranslation({ 0, 2.5, 0 });
+    //planetOneNode->AddScale(0.75);
+    ////Child one node: translation logic
+    //AnimationChannel channel2translation;
+    //AnimationSampler sampler2Translation;
+    //sampler2Translation.vec3_values.push_back(m_startPosChild1);
+    //sampler2Translation.vec3_values.push_back({ m_endPosChild1 });
+    //sampler2Translation.timestamps.push_back(0.0f);
+    //sampler2Translation.timestamps.push_back(2.0f);
+    //m_AnimationClass.m_samplers.push_back(sampler2Translation);
+    //m_AnimationClass.m_channels.push_back({ channel2translation.ROTATION, 1, 2 });
+    ////Child one node: rotation logic
+    //AnimationChannel channel3Rotation;
+    //AnimationSampler sampler3Rotation;
+    //sampler3Rotation.vec4_values.push_back({ m_startRotChild1 });
+    //sampler3Rotation.vec4_values.push_back({ m_endRotChild1 });
+    //sampler3Rotation.timestamps.push_back(0.0f);
+    //sampler3Rotation.timestamps.push_back(2.0f);
+    //m_AnimationClass.m_samplers.push_back(sampler2Translation);
+    //m_AnimationClass.m_channels.push_back({ channel2translation.ROTATION, 1, 2 });
     //---------------------|||[[[[[ HIERARCHY CREATION END ]]]]]|||---------------------
 }
-
 
 void Scene::update(const float deltaTime)
 {
@@ -153,7 +155,6 @@ void Scene::update(const float deltaTime)
     cb1.vOutputColor = XMFLOAT4(0, 0, 0, 0);
 
     m_lightProperties.EyePosition = XMFLOAT4(m_pCamera->getPosition().x, m_pCamera->getPosition().y, m_pCamera->getPosition().z, 1);
-
     m_pImmediateContext->UpdateSubresource(m_pLightConstantBuffer.Get(), 0, nullptr, &m_lightProperties, 0, 0);
     ID3D11Buffer* buf = m_pLightConstantBuffer.Get();
     m_pImmediateContext->PSSetConstantBuffers(1, 1, &buf);
@@ -180,11 +181,42 @@ void Scene::update(const float deltaTime)
             float t = (animationTimer - prevTime) / (nextTime - prevTime);
             if (animationTimer >= nextTime) animationTimer = 0; //Reset or Loop the animation if its finished
 
-            DirectX::XMVECTOR prevValue = DirectX::XMLoadFloat3(&m_AnimationClass.m_samplers[i].vec3_values[prevKeyFrame]);
-            DirectX::XMVECTOR nextValue = DirectX::XMLoadFloat3(&m_AnimationClass.m_samplers[i].vec3_values[nextKeyFrame]);
-            DirectX::XMVECTOR finalValue = DirectX::XMVectorLerp(prevValue, nextValue, t);
-            DirectX::XMMATRIX translationMatrix = DirectX::XMMatrixTranslationFromVector(finalValue);
-            m_sceneobject.GetRootNode(0)->SetMatrix(translationMatrix);
+            XMMATRIX translationMatrix, rotationMatrix;
+            //Translation Matrix
+            if (m_AnimationClass.m_channels[channel].path == AnimationChannel::TRANSLATION) 
+            {
+                DirectX::XMVECTOR prevValue = DirectX::XMLoadFloat3(&m_AnimationClass.m_samplers[i].vec3_values[prevKeyFrame]);
+                DirectX::XMVECTOR nextValue = DirectX::XMLoadFloat3(&m_AnimationClass.m_samplers[i].vec3_values[nextKeyFrame]);
+                DirectX::XMVECTOR finalValue = DirectX::XMVectorLerp(prevValue, nextValue, t);
+                DirectX::XMMATRIX translationMatrix = DirectX::XMMatrixTranslationFromVector(finalValue);
+                m_sceneobject.GetRootNode(0)->SetMatrix(translationMatrix);
+            }
+            //Rotation Matrix
+            else if (m_AnimationClass.m_channels[channel].path == AnimationChannel::ROTATION) 
+            {
+                DirectX::XMVECTOR currentRot = DirectX::XMQuaternionSlerp
+                   (DirectX::XMLoadFloat4(&m_AnimationClass.m_samplers[i].vec4_values[prevKeyFrame]),
+                    DirectX::XMLoadFloat4(&m_AnimationClass.m_samplers[i].vec4_values[nextKeyFrame]), t);
+
+                DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationQuaternion(currentRot);
+                m_sceneobject.GetRootNode(0)->SetMatrix(rotationMatrix * translationMatrix);
+            }
+
+			//DirectX::XMVECTOR prevRotValue = DirectX::XMLoadFloat4(&m_AnimationClass.m_samplers[i].vec4_values[prevKeyFrame]);
+			//DirectX::XMVECTOR nextRotValue = DirectX::XMLoadFloat4(&m_AnimationClass.m_samplers[i].vec4_values[nextKeyFrame]);
+			//DirectX::XMVECTOR finalRotValue = DirectX::XMQuaternionSlerp(prevRotValue, nextRotValue, t);
+            //DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationRollPitchYawFromVector(finalRotValue);
+			
+            //DirectX::XMMATRIX finalMatrix = rotationMatrix * translationMatrix;
+
+            //if (channel > 1) 
+            //{
+            //    m_sceneobject.GetRootNode(0)->GetChildNode(0)->SetMatrix(translationMatrix);
+            //}
+            //else 
+            //{
+            //    m_sceneobject.GetRootNode(0)->SetMatrix(translationMatrix);
+            //} 
         }
 
         m_sceneobject.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made 

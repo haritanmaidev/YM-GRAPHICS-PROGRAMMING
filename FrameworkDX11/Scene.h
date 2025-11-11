@@ -62,11 +62,11 @@ public:
 	DirectX::XMFLOAT3 m_startPosSun = { -3.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT3 m_endPosSun = { 3.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT4 m_startRotSun = { 0.0f, 0.0f, 0.0f, 1.0f };
-	DirectX::XMFLOAT4 m_endRotSun = { 0.0f, 0.0f, 90.0f, 1.0f };
+	DirectX::XMFLOAT4 m_endRotSun = { 100.0f, 40.0f, 90.0f, 1.0f };
 
 	//Child one Matrix Values
-	DirectX::XMFLOAT3 m_startPosChild1 = {};
-	DirectX::XMFLOAT3 m_endPosChild1 = {};
+	DirectX::XMFLOAT3 m_startPosChild1 = {-3.0f, 3.0f, 0.0f};
+	DirectX::XMFLOAT3 m_endPosChild1 = { 3.0f, -3.0f, 0.0f };
 	DirectX::XMFLOAT4 m_startRotChild1 = { 0.0f, 0.0f, 0.0f, 1.0f };
 	DirectX::XMFLOAT4 m_endRotChild1 = { 0.0f, 0.0f, 90.0f, 1.0f };
 
