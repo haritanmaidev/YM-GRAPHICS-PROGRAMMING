@@ -30,15 +30,12 @@ class Scene
 public:
 
 	Scene() {}
-
 	~Scene() {}
-
+	
 	HRESULT		init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& device, const Microsoft::WRL::ComPtr<ID3D11DeviceContext>& context, DX11Renderer* renderer);
 	void		cleanUp();
 	Camera*		getCamera() { return m_pCamera; }
-
 	void		update(const float deltaTime);
-	
 	const LightPropertiesConstantBuffer& getLightProperties() { return m_lightProperties; }
 
 private:
@@ -57,16 +54,23 @@ public:
 	IRenderingContext m_ctx;
 	SceneGraph m_sceneobject;
 
-	// Animation matrix values and stuff
+	//------------------------ANIMATION VALUES N STUFF SECTION------------------------
+	HRESULT AnimationHierarchyInit(); //Custom Animation Hierarchy Init Function
 	Animation m_AnimationClass;
 
-	DirectX::XMFLOAT3 m_startPos = { -3.0f, 0.0f, 0.0f };
-	DirectX::XMFLOAT3 m_endPos = { 3.0f, 0.0f, 0.0f };
-	DirectX::XMFLOAT4 m_startRot = { 0.0f, 0.0f, 0.0f, 1.0f };
-	DirectX::XMFLOAT4 m_endRot = { 0.0f, 0.0f, 90.0f, 1.0f };
+	//Parent Matrix Values
+	DirectX::XMFLOAT3 m_startPosSun = { -3.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_endPosSun = { 3.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT4 m_startRotSun = { 0.0f, 0.0f, 0.0f, 1.0f };
+	DirectX::XMFLOAT4 m_endRotSun = { 0.0f, 0.0f, 90.0f, 1.0f };
+
+	//Child one Matrix Values
+	DirectX::XMFLOAT3 m_startPosChild1 = {};
+	DirectX::XMFLOAT3 m_endPosChild1 = {};
+	DirectX::XMFLOAT4 m_startRotChild1 = { 0.0f, 0.0f, 0.0f, 1.0f };
+	DirectX::XMFLOAT4 m_endRotChild1 = { 0.0f, 0.0f, 90.0f, 1.0f };
 
 	float animationTimer = 0.0f;
-
 
 private:
 	ID3D11ShaderResourceView* m_pTextureDiffuse;

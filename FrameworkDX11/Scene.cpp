@@ -14,41 +14,9 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
     HRESULT hr;
 
     m_ctx.Init(device.Get(), context.Get(), renderer);
-
-
-    //---------------------|||[[[[[ HIERARCHY CREATION START ]]]]]|||---------------------
-    //PARENT NODE INITIALIZATION
-    SceneNode* bodyNode = m_sceneobject.CreateRootNode();
-    if (!bodyNode) return E_FAIL;
-    bodyNode->LoadSphere(m_ctx);
-    bodyNode->AddScale(1.5);
-    bodyNode->AddTranslation({ 0.0, 0, 2.0 });
-    //Parent node: translation logic
-    AnimationChannel channel0translation;
-    AnimationSampler sampler0Translation;
-    sampler0Translation.vec3_values.push_back(m_startPos);// Setting position keyframes
-    sampler0Translation.vec3_values.push_back(m_endPos);
-	sampler0Translation.timestamps.push_back(0.0f);// Setting time keyframes for each keyframe
-	sampler0Translation.timestamps.push_back(2.0f);
-    m_AnimationClass.m_samplers.push_back(sampler0Translation);
-    m_AnimationClass.m_channels.push_back({ channel0translation.TRANSLATION, 0, 0 });
-    //Parent node: rotation logic
-    AnimationChannel channel1Rotation;
-	AnimationSampler sampler1Rotation;
-	sampler1Rotation.vec4_values.push_back(m_startRot);//Rotation keyframes
-    sampler1Rotation.vec4_values.push_back(m_endRot);
-    sampler1Rotation.timestamps.push_back(0.0f); // Rotation timestamps of each keyframe
-    sampler1Rotation.timestamps.push_back(2.0f);
-    m_AnimationClass.m_samplers.push_back(sampler1Rotation);
-    m_AnimationClass.m_channels.push_back({ channel1Rotation.ROTATION, 0, 1 });
-
-    //CHILD NODE INITIALIZATION
-    SceneNode* headNode = bodyNode->CreateChildNode();
-    if (!headNode) return E_FAIL;
-    if (!headNode->LoadSphere(m_ctx));
-    headNode->AddTranslation({0, 1.5, 0});
-    headNode->AddScale(0.75);
-    //---------------------|||[[[[[ HIERARCHY CREATION END ]]]]]|||---------------------
+    
+    //-------------------- ANIMATION HIERARCHY INIT HERE --------------------
+    if (bool animInit = AnimationHierarchyInit() == E_FAIL) return E_FAIL;
 
     m_pCamera = new Camera(XMFLOAT3(0, 0, -6), XMFLOAT3(0, 0, 1), XMFLOAT3(0.0f, 1.0f, 0.0f), width, height);
     
@@ -115,6 +83,63 @@ void Scene::setupLightProperties()
     m_lightProperties.EyePosition = LightPosition;
     m_lightProperties.Lights[0] = light;
 }
+
+
+HRESULT Scene::AnimationHierarchyInit()
+{
+    //---------------------|||[[[[[ HIERARCHY CREATION START ]]]]]|||---------------------
+    //PARENT NODE INITIALIZATION
+    SceneNode* sunNode = m_sceneobject.CreateRootNode();
+    if (!sunNode) return E_FAIL;
+    sunNode->LoadSphere(m_ctx);
+    sunNode->AddScale(1.5);
+    sunNode->AddTranslation({ 0.0, 0, 2.0 });
+    //Parent node: translation logic
+    AnimationChannel channel0translation;
+    AnimationSampler sampler0Translation;
+    sampler0Translation.vec3_values.push_back(m_startPosSun);// Setting position keyframes
+    sampler0Translation.vec3_values.push_back(m_endPosSun);
+    sampler0Translation.timestamps.push_back(0.0f);// Setting time keyframes for each keyframe
+    sampler0Translation.timestamps.push_back(2.0f);
+    m_AnimationClass.m_samplers.push_back(sampler0Translation);
+    m_AnimationClass.m_channels.push_back({ channel0translation.TRANSLATION, 0, 0 });
+    //Parent node: rotation logic
+    AnimationChannel channel1Rotation;
+    AnimationSampler sampler1Rotation;
+    sampler1Rotation.vec4_values.push_back(m_startRotSun);//Rotation keyframes
+    sampler1Rotation.vec4_values.push_back(m_endRotSun);
+    sampler1Rotation.timestamps.push_back(0.0f); // Rotation timestamps of each keyframe
+    sampler1Rotation.timestamps.push_back(2.0f);
+    m_AnimationClass.m_samplers.push_back(sampler1Rotation);
+    m_AnimationClass.m_channels.push_back({ channel1Rotation.ROTATION, 0, 1 });
+
+    //CHILD NODE INITIALIZATION
+    SceneNode* planetOneNode = sunNode->CreateChildNode();
+    if (!planetOneNode) return E_FAIL;
+    if (!planetOneNode->LoadSphere(m_ctx));
+    planetOneNode->AddTranslation({ 0, 1.5, 0 });
+    planetOneNode->AddScale(0.75);
+    //Child one node: translation logic
+    AnimationChannel channel2translation;
+    AnimationSampler sampler2Translation;
+    sampler2Translation.vec3_values.push_back(m_startPosChild1);
+    sampler2Translation.vec3_values.push_back({ m_endPosChild1 });
+    sampler2Translation.timestamps.push_back(0.0f);
+    sampler2Translation.timestamps.push_back(2.0f);
+    m_AnimationClass.m_samplers.push_back(sampler2Translation);
+    m_AnimationClass.m_channels.push_back({ channel2translation.ROTATION, 1, 2 });
+    //Child one node: rotation logic
+    AnimationChannel channel3Rotation;
+    AnimationSampler sampler3Rotation;
+    sampler3Rotation.vec4_values.push_back({ m_startRotChild1 });
+    sampler3Rotation.vec4_values.push_back({ m_endRotChild1 });
+    sampler3Rotation.timestamps.push_back(0.0f);
+    sampler3Rotation.timestamps.push_back(2.0f);
+    m_AnimationClass.m_samplers.push_back(sampler2Translation);
+    m_AnimationClass.m_channels.push_back({ channel2translation.ROTATION, 1, 2 });
+    //---------------------|||[[[[[ HIERARCHY CREATION END ]]]]]|||---------------------
+}
+
 
 void Scene::update(const float deltaTime)
 {
