@@ -59,7 +59,6 @@ public:
 
 	// Animation matrix values and stuff
 	Animation m_AnimationClass;
-	AnimationChannel m_AnimationChannel;
 
 	DirectX::XMFLOAT3 m_startPos = { -3.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT3 m_endPos = { 3.0f, 0.0f, 0.0f };

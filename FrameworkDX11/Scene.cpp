@@ -30,7 +30,7 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
     sampler0Translation.vec3_values.push_back(m_endPos);
 	sampler0Translation.timestamps.push_back(0.0f);// Setting time keyframes for each keyframe
 	sampler0Translation.timestamps.push_back(2.0f);
-	m_AnimationClass.m_samplers.push_back(sampler0Translation);
+    m_AnimationClass.m_samplers.push_back(sampler0Translation);
     m_AnimationClass.m_channels.push_back({ channel0translation.TRANSLATION, 0, 0 });
     //Parent node: rotation logic
     AnimationChannel channel1Rotation;
@@ -139,31 +139,29 @@ void Scene::update(const float deltaTime)
     for (int channel = 0; channel < m_AnimationClass.m_channels.size(); channel++) 
     {
         int nextKeyFrame = -1;
-        AnimationSampler sampler = m_AnimationClass.m_samplers[channel];
-
-        for (int i = 0; i < sampler.timestamps.size(); i++) 
+        for (int i = 0; i < m_AnimationClass.m_samplers[channel].timestamps.size(); i++)
         {
-            if (sampler.timestamps[i] > animationTimer) 
+            if (m_AnimationClass.m_samplers[i].timestamps[i] > animationTimer)
             {
                 nextKeyFrame = i;
                 break;
             }
+
+            //Keyframe to play, based on timestamp and t value(progress variable)
+            if (nextKeyFrame == -1 || nextKeyFrame == 0) nextKeyFrame = 1;
+            int prevKeyFrame = nextKeyFrame - 1;
+            float prevTime = m_AnimationClass.m_samplers[i].timestamps[prevKeyFrame];
+            float nextTime = m_AnimationClass.m_samplers[i].timestamps[nextKeyFrame];
+            float t = (animationTimer - prevTime) / (nextTime - prevTime);
+            if (animationTimer >= nextTime) animationTimer = 0; //Reset or Loop the animation if its finished
+
+            DirectX::XMVECTOR prevValue = DirectX::XMLoadFloat3(&m_AnimationClass.m_samplers[i].vec3_values[prevKeyFrame]);
+            DirectX::XMVECTOR nextValue = DirectX::XMLoadFloat3(&m_AnimationClass.m_samplers[i].vec3_values[nextKeyFrame]);
+            DirectX::XMVECTOR finalValue = DirectX::XMVectorLerp(prevValue, nextValue, t);
+            DirectX::XMMATRIX translationMatrix = DirectX::XMMatrixTranslationFromVector(finalValue);
+            m_sceneobject.GetRootNode(0)->SetMatrix(translationMatrix);
         }
 
-        //Keyframe to play, based on timestamp and t value(progress variable)
-        if (nextKeyFrame == -1 || nextKeyFrame == 0) nextKeyFrame = 1;
-        int prevKeyFrame = nextKeyFrame - 1;
-        float prevTime = sampler.timestamps[prevKeyFrame];
-        float nextTime = sampler.timestamps[nextKeyFrame];
-        float t = (animationTimer - prevTime) / (nextTime - prevTime);
-        if (animationTimer >= nextTime) animationTimer = 0; //Reset or Loop the animation if its finished
-        
-        DirectX::XMVECTOR prevValue = DirectX::XMLoadFloat3(&sampler.vec3_values[prevKeyFrame]);
-        DirectX::XMVECTOR nextValue = DirectX::XMLoadFloat3(&sampler.vec3_values[nextKeyFrame]);
-        DirectX::XMVECTOR finalValue = DirectX::XMVectorLerp(prevValue, nextValue, t);
-        DirectX::XMMATRIX translationMatrix = DirectX::XMMatrixTranslationFromVector(finalValue);
-
-        m_sceneobject.GetRootNode(0)->SetMatrix(translationMatrix);
         m_sceneobject.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made 
         m_sceneobject.RenderFrame(m_ctx, deltaTime); // renders the object
     }
