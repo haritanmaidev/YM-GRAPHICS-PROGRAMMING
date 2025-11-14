@@ -259,21 +259,27 @@ void Scene::SkeletonArmInit()
     }
 
     //--- 3. Create the Animation for the Skeleton --
-    Animation combined = CreateWaveAnimation(1);   // adds samplers/channels for node 1
-    CreateWaveAnimationSampler(2, &combined);      // append samplers/channels for node 2
-    m_robotArmAnimations.push_back(std::move(combined));
+    m_robotArmAnimations.push_back(CreateWaveAnimation());
+    
+    //Animation combined = CreateWaveAnimation(1);   // adds samplers/channels for node 1
+    //CreateWaveAnimationSampler(2, &combined);      // append samplers/channels for node 2
+    //m_robotArmAnimations.push_back(std::move(combined));
 }
 
-Animation Scene::CreateWaveAnimation(int nodeIndex) 
+Animation Scene::CreateWaveAnimation() 
 {
-	Animation anim;
-	anim.m_name = "WaveHand_Simple";
-    CreateWaveAnimationSampler(nodeIndex, &anim);
-    return anim;
+	Animation animNode;
+	animNode.m_name = "WaveHand_Simple";
+    CreateWaveAnimationSampler(0, &animNode, m_startPosNode1, m_endPosNode1, m_startRotNode1, m_endRotNode1, m_node1StartAngle, m_node1EndAngle);
+    CreateWaveAnimationSampler(1, &animNode, m_startPosNode1, m_endPosNode1, m_startRotNode1, m_endRotNode1, m_node1StartAngle, m_node1EndAngle);
+	CreateWaveAnimationSampler(2, &animNode, m_startPosNode1, m_endPosNode1, m_startRotNode1, m_endRotNode1, m_node1StartAngle, m_node1EndAngle);
+    
+    return animNode;
 }
 
 // Creates a simple 2-keyframe animation where only one node joint moves.
-void Scene::CreateWaveAnimationSampler(int nodeIndex, Animation* anim)
+void Scene::CreateWaveAnimationSampler(int nodeIndex, Animation* anim, const DirectX::XMFLOAT3& startP,
+    const DirectX::XMFLOAT3& endP, const DirectX::XMFLOAT3& startR, const DirectX::XMFLOAT3& endR, float startAngle, float endAngle)
 {
     // Samplers for the hand's translation and rotation.
     AnimationSampler nodeTranslationSampler, nodeRotationSampler;
@@ -283,21 +289,21 @@ void Scene::CreateWaveAnimationSampler(int nodeIndex, Animation* anim)
 
     // --- Keyframe 1: The Start Pose (t = 0.0s) ---
     // The hand is in its default, non-animated state.
-    XMFLOAT3 startPos = BakeTranslationOntoBindPose(nodeBindPose, { 0.0f, 0.0f, 0.0f });
+    XMFLOAT3 startPos = BakeTranslationOntoBindPose(nodeBindPose, startP);
     nodeTranslationSampler.timestamps.push_back(0.0f);
     nodeTranslationSampler.vec3_values.push_back(startPos);
 
-    XMFLOAT4 startRot = BakeRotationOntoBindPose(nodeBindPose, { 0, 0, 1 }, 0.0f); // No rotation
+    XMFLOAT4 startRot = BakeRotationOntoBindPose(nodeBindPose, startR, startAngle); // No rotation
     nodeRotationSampler.timestamps.push_back(0.0f);
     nodeRotationSampler.vec4_values.push_back(startRot);
 
     // --- Keyframe 2: The End Pose (t = 2.0s) ---
     // The hand is translated up and rotated 90 degrees to the side.
-    XMFLOAT3 endPos = BakeTranslationOntoBindPose(nodeBindPose, { 0.0f, 2.0f, 0.0f }); // Move up slightly
+    XMFLOAT3 endPos = BakeTranslationOntoBindPose(nodeBindPose, endP); // Move up slightly
     nodeTranslationSampler.timestamps.push_back(2.0f);
     nodeTranslationSampler.vec3_values.push_back(endPos);
 
-    XMFLOAT4 endRot = BakeRotationOntoBindPose(nodeBindPose, { 0, 0, 1 }, DirectX::XM_PIDIV2); // Rotate 90 degrees
+    XMFLOAT4 endRot = BakeRotationOntoBindPose(nodeBindPose, endR, endAngle); // Rotate 90 degrees
     nodeRotationSampler.timestamps.push_back(2.0f);
     nodeRotationSampler.vec4_values.push_back(endRot);
 

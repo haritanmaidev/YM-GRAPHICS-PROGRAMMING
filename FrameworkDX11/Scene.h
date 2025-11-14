@@ -84,12 +84,35 @@ public:
 
 	//------------------------ WEEK 7.1 - SKELETON STUFF SECTION ------------------------
 	void SkeletonArmInit(); //Custom Skeleton Arm Init Function
-	Animation CreateWaveAnimation(int nodeIndex);
-	void CreateWaveAnimationSampler(int nodeIndex, Animation* anim);
+	Animation CreateWaveAnimation();
+	void CreateWaveAnimationSampler(int nodeIndex, Animation* anim, const DirectX::XMFLOAT3& startP,
+	const DirectX::XMFLOAT3& endP, const DirectX::XMFLOAT3& startR, const DirectX::XMFLOAT3& endR,
+	float startAngle, float endAngle);
 
 	Skeleton m_robotArmSkeleton;
 	std::vector<SceneNode*> m_armSegmentNodes;
 	std::vector<Animation> m_robotArmAnimations;
+
+	//Different node animation values
+	DirectX::XMFLOAT3 m_startPosNode1 = { 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_endPosNode1 = { 0.0f, 2.0f, 0.0f };
+	DirectX::XMFLOAT3 m_startRotNode1 = { 0, 0, 1 };
+	DirectX::XMFLOAT3 m_endRotNode1 = { 0, 0, 1 };
+	float m_node1StartAngle = 0.0f;
+	float m_node1EndAngle = DirectX::XM_PIDIV2;
+
+	DirectX::XMFLOAT3 m_startPosNode2 = { 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_endPosNode2 = { 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_startRotNode2;
+	DirectX::XMFLOAT3 m_endRotNode2;
+	float m_node2StartAngle = 0.0f;
+	float m_node2EndAngle = 0.0f;
+
+	DirectX::XMFLOAT3 m_startPosNode3 = { 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_endPosNode3 = { 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_startRotNode3;
+	DirectX::XMFLOAT3 m_endRotNode3;
+	float m_node3EndAngle = 0.0f;
 
 private:
 	ID3D11ShaderResourceView* m_pTextureDiffuse;
