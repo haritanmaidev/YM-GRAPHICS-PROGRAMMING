@@ -12,7 +12,7 @@ struct AnimationSampler
     enum InterpolationType { LINEAR, STEP, CUBICSPLINE };
     InterpolationType interpolation = LINEAR;
     std::vector<float> timestamps;
-       // Have separate vectors for each possible data type
+    // Have separate vectors for each possible data type
     std::vector<DirectX::XMFLOAT3> vec3_values;
     std::vector<DirectX::XMFLOAT4> vec4_values;
 };
