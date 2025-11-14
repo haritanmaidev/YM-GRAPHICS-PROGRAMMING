@@ -94,78 +94,78 @@ HRESULT Scene::AnimationHierarchyInit()
     sunNode->AddScale(1.5);
     sunNode->AddTranslation({ 0.0, 0, 2.0 });
     //Parent node: translation logic
-    AnimationChannel channel1translation;
-    AnimationSampler sampler1Translation;
-    sampler1Translation.vec3_values.push_back(m_startPosParent);// Setting position keyframes
-    sampler1Translation.vec3_values.push_back(m_endPosParent);
-    sampler1Translation.timestamps.push_back(0.0f);// Setting time keyframes for each keyframe
-    sampler1Translation.timestamps.push_back(2.0f);
-    m_AnimationClass.m_samplers.push_back(sampler1Translation);
-    m_AnimationClass.m_channels.push_back({ channel1translation.TRANSLATION, 0, 0 });
+    AnimationChannel channel0translation;
+    AnimationSampler sampler0Translation;
+    sampler0Translation.vec3_values.push_back(m_startPosParent);// Setting position keyframes
+    sampler0Translation.vec3_values.push_back(m_endPosParent);
+    sampler0Translation.timestamps.push_back(0.0f);// Setting time keyframes for each keyframe
+    sampler0Translation.timestamps.push_back(2.0f);
+    m_AnimationClass.m_samplers.push_back(sampler0Translation);
+    m_AnimationClass.m_channels.push_back({ channel0translation.TRANSLATION, 0, 0 });
     //Parent node: rotation logic
-    AnimationChannel channel2Rotation;
-    AnimationSampler sampler2Rotation;
+    AnimationChannel channel1Rotation;
+    AnimationSampler sampler1Rotation;
     DirectX::XMStoreFloat4(&m_startRotParent, DirectX::XMQuaternionIdentity());
-    DirectX::XMStoreFloat4(&m_endRotParent, DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(100.0f, 40.0f, 90.0f, 1.0f), DirectX::XM_PI));
-    sampler2Rotation.vec4_values.push_back(m_startRotParent);//Rotation keyframes
-    sampler2Rotation.vec4_values.push_back(m_endRotParent);
-    sampler2Rotation.timestamps.push_back(0.0f); // Rotation timestamps of each keyframe
-    sampler2Rotation.timestamps.push_back(2.0f);
-    m_AnimationClass.m_samplers.push_back(sampler2Rotation);
-    m_AnimationClass.m_channels.push_back({ channel2Rotation.ROTATION, 0, 1 });
+    DirectX::XMStoreFloat4(&m_endRotParent, DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(0, 0.85, 0, 0.52), DirectX::XM_PI));
+    sampler1Rotation.vec4_values.push_back(m_startRotParent);//Rotation keyframes
+    sampler1Rotation.vec4_values.push_back(m_endRotParent);
+    sampler1Rotation.timestamps.push_back(0.0f); // Rotation timestamps of each keyframe
+    sampler1Rotation.timestamps.push_back(2.0f);
+    m_AnimationClass.m_samplers.push_back(sampler1Rotation);
+    m_AnimationClass.m_channels.push_back({ channel1Rotation.ROTATION, 0, 1 });
 
 #pragma region child 1
-    ////CHILD NODE INITIALIZATION
-    //SceneNode* planetOneNode = sunNode->CreateChildNode();
-    //if (!planetOneNode) return E_FAIL;
-    //if (!planetOneNode->LoadSphere(m_ctx));
-    //planetOneNode->AddTranslation({ 0, 2.5, 0 });
-    //planetOneNode->AddScale(0.75);
-    ////Child one node: translation logic
-    //AnimationChannel channel3translation;
-    //AnimationSampler sampler3Translation;
-    //sampler3Translation.vec3_values.push_back(m_startPosChild1);
-    //sampler3Translation.vec3_values.push_back({ m_endPosChild1 });
-    //sampler3Translation.timestamps.push_back(0.0f);
-    //sampler3Translation.timestamps.push_back(2.0f);
-    //m_AnimationClass.m_samplers.push_back(sampler3Translation);
-    //m_AnimationClass.m_channels.push_back({ channel3translation.TRANSLATION, 1, 2 });
-    ////Child one node: rotation logic
-    //AnimationChannel channel4Rotation;
-    //AnimationSampler sampler4Rotation;
-    //sampler4Rotation.vec4_values.push_back({ m_startRotChild1 });
-    //sampler4Rotation.vec4_values.push_back({ m_endRotChild1 });
-    //sampler4Rotation.timestamps.push_back(0.0f);
-    //sampler4Rotation.timestamps.push_back(2.0f);
-    //m_AnimationClass.m_samplers.push_back(sampler4Rotation);
-    //m_AnimationClass.m_channels.push_back({ channel4Rotation.ROTATION, 1, 3 });
+    //CHILD NODE INITIALIZATION
+    SceneNode* planetOneNode = sunNode->CreateChildNode();
+    if (!planetOneNode) return E_FAIL;
+    if (!planetOneNode->LoadSphere(m_ctx));
+    planetOneNode->AddTranslation({ 0, 2.5, 0 });
+    planetOneNode->AddScale(0.75);
+    //Child one node: translation logic
+    AnimationChannel channel2translation;
+    AnimationSampler sampler2Translation;
+    sampler2Translation.vec3_values.push_back(m_startPosChild1);
+    sampler2Translation.vec3_values.push_back({ m_endPosChild1 });
+    sampler2Translation.timestamps.push_back(0.0f);
+    sampler2Translation.timestamps.push_back(2.0f);
+    m_AnimationClass.m_samplers.push_back(sampler2Translation);
+    m_AnimationClass.m_channels.push_back({ channel2translation.TRANSLATION, 1, 2 });
+    //Child one node: rotation logic
+    AnimationChannel channel3Rotation;
+    AnimationSampler sampler3Rotation;
+    sampler3Rotation.vec4_values.push_back({ m_startRotChild1 });
+    sampler3Rotation.vec4_values.push_back({ m_endRotChild1 });
+    sampler3Rotation.timestamps.push_back(0.0f);
+    sampler3Rotation.timestamps.push_back(2.0f);
+    m_AnimationClass.m_samplers.push_back(sampler3Rotation);
+    m_AnimationClass.m_channels.push_back({ channel3Rotation.ROTATION, 1, 3 });
 #pragma endregion
 
 #pragma region child 2
-    //////CHILD 2 NODE INITIALIZATION
-    //SceneNode* planetTwoNode = sunNode->CreateChildNode();
-    //if (!planetTwoNode) return E_FAIL;
-    //if (!planetTwoNode->LoadSphere(m_ctx));
-    //planetTwoNode->AddTranslation({ 0, 2.5, 0 });
-    //planetTwoNode->AddScale(0.75);
-    ////Child two node: translation logic
-    //AnimationChannel channel5translation;
-    //AnimationSampler sampler5Translation;
-    //sampler5Translation.vec3_values.push_back({4.f, 0.f, 0.f });
-    //sampler5Translation.vec3_values.push_back({ -3.f, 0.f, 0.f });
-    //sampler5Translation.timestamps.push_back(0.0f);
-    //sampler5Translation.timestamps.push_back(2.0f);
-    //m_AnimationClass.m_samplers.push_back(sampler5Translation);
-    //m_AnimationClass.m_channels.push_back({ channel5translation.TRANSLATION, 2, 4 });
-    ////Child two node: rotation logic
-    //AnimationChannel channel6Rotation;
-    //AnimationSampler sampler6Rotation;
-    //sampler6Rotation.vec4_values.push_back({ m_startRotChild1 });
-    //sampler6Rotation.vec4_values.push_back({ m_endRotChild1 });
-    //sampler6Rotation.timestamps.push_back(0.0f);
-    //sampler6Rotation.timestamps.push_back(2.0f);
-    //m_AnimationClass.m_samplers.push_back(sampler6Rotation);
-    //m_AnimationClass.m_channels.push_back({ channel6Rotation.ROTATION, 2, 5 });
+    ////CHILD 2 NODE INITIALIZATION
+    SceneNode* planetTwoNode = sunNode->CreateChildNode();
+    if (!planetTwoNode) return E_FAIL;
+    if (!planetTwoNode->LoadSphere(m_ctx));
+    planetTwoNode->AddTranslation({ 0, 2.5, 0 });
+    planetTwoNode->AddScale(0.75);
+    //Child two node: translation logic
+    AnimationChannel channel4translation;
+    AnimationSampler sampler4Translation;
+    sampler4Translation.vec3_values.push_back({0.f, 0.f, 0.f });
+    sampler4Translation.vec3_values.push_back({ 5.f, 0.f, 0.f });
+    sampler4Translation.timestamps.push_back(0.0f);
+    sampler4Translation.timestamps.push_back(2.0f);
+    m_AnimationClass.m_samplers.push_back(sampler4Translation);
+    m_AnimationClass.m_channels.push_back({ channel4translation.TRANSLATION, 2, 4 });
+    //Child two node: rotation logic
+    AnimationChannel channel5otation;
+    AnimationSampler sampler5Rotation;
+    sampler5Rotation.vec4_values.push_back({ m_startRotChild1 });
+    sampler5Rotation.vec4_values.push_back({ m_endRotChild1 });
+    sampler5Rotation.timestamps.push_back(0.0f);
+    sampler5Rotation.timestamps.push_back(2.0f);
+    m_AnimationClass.m_samplers.push_back(sampler5Rotation);
+    m_AnimationClass.m_channels.push_back({ channel5otation.ROTATION, 2, 5 });
 #pragma endregion
     //---------------------|||[[[[[ HIERARCHY CREATION END ]]]]]|||---------------------
 }
@@ -197,9 +197,13 @@ void Scene::update(const float deltaTime)
         SceneNode* currentNode = nullptr;
 
         if (currentChannel.jointIndex == 0) 
+        {
             currentNode = m_sceneobject.GetRootNode(0);
-        else 
+        } 
+        else
+        {
             currentNode = m_sceneobject.GetRootNode(0)->GetChildNode(currentChannel.jointIndex - 1);
+        }
 
         int nextKeyFrame = -1;
         for (int j = 0; j < currentSampler.timestamps.size(); j++)
@@ -218,9 +222,9 @@ void Scene::update(const float deltaTime)
         float t = (animationTimer - prevTime) / (nextTime - prevTime);
         if (animationTimer >= nextTime) animationTimer = 0; //Reset or Loop the animation if its finished
 
-        XMMATRIX translationMatrix = DirectX::XMMatrixIdentity();
-        XMMATRIX rotationMatrix = DirectX::XMMatrixIdentity();
-        XMMATRIX scaleMatrix = DirectX::XMMatrixIdentity();
+        DirectX::XMMATRIX translationMatrix = DirectX::XMMatrixIdentity();
+        DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixIdentity();
+        DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixIdentity();
 
         if (m_AnimationClass.m_channels[i].path == AnimationChannel::TRANSLATION)
         {
@@ -236,7 +240,7 @@ void Scene::update(const float deltaTime)
             //DirectX::XMVECTOR nextValue = DirectX::XMLoadFloat4(&currentSampler.vec4_values[nextKeyFrame]);
             //DirectX::XMVECTOR currentRot = DirectX::XMQuaternionSlerp(prevValue, nextValue, t);
             //rotationMatrix = DirectX::XMMatrixTranslationFromVector(currentRot);
-            //currentNode->SetMatrix(rotationMatrix);
+            //currentNode->SetMatrix(rotationMatrix * translationMatrix);
         }
         else if (m_AnimationClass.m_channels[i].path == AnimationChannel::SCALE) 
         {
@@ -247,7 +251,7 @@ void Scene::update(const float deltaTime)
             //currentNode->SetMatrix(scaleMatrix);
         }
 
-        currentNode->SetMatrix(scaleMatrix * rotationMatrix * translationMatrix);
+        //currentNode->SetMatrix(scaleMatrix * rotationMatrix * translationMatrix);
     }
 
     m_sceneobject.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made 

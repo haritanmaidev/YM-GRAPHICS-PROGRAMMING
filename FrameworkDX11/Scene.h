@@ -61,8 +61,8 @@ public:
 	//Parent Matrix Values
 	DirectX::XMFLOAT3 m_startPosParent = { -3.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT3 m_endPosParent = { 3.0f, 0.0f, 0.0f };
-	DirectX::XMFLOAT4 m_startRotParent = { 0.0f, 0.0f, 0.0f, 1.0f };
-	DirectX::XMFLOAT4 m_endRotParent = { 100.0f, 40.0f, 90.0f, 1.0f };
+	DirectX::XMFLOAT4 m_startRotParent;
+	DirectX::XMFLOAT4 m_endRotParent;
 
 	//Child one Matrix Values
 	DirectX::XMFLOAT3 m_startPosChild1 = {0.0f, 3.0f, 0.0f};
