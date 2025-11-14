@@ -60,15 +60,21 @@ public:
 
 	//Parent Matrix Values
 	DirectX::XMFLOAT3 m_startPosParent = { -3.0f, 0.0f, 0.0f };
-	DirectX::XMFLOAT3 m_endPosParent = { 3.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_endPosParent = { 0.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT4 m_startRotParent;
 	DirectX::XMFLOAT4 m_endRotParent;
 
 	//Child one Matrix Values
 	DirectX::XMFLOAT3 m_startPosChild1 = {0.0f, 3.0f, 0.0f};
 	DirectX::XMFLOAT3 m_endPosChild1 = { 0.0f, -3.0f, 0.0f };
-	DirectX::XMFLOAT4 m_startRotChild1 = { 0.0f, 0.0f, 0.0f, 1.0f };
-	DirectX::XMFLOAT4 m_endRotChild1 = { 0.0f, 0.0f, 90.0f, 1.0f };
+	DirectX::XMFLOAT4 m_startRotChild1;
+	DirectX::XMFLOAT4 m_endRotChild1;
+
+	//Child two Matrix Values
+	DirectX::XMFLOAT3 m_startPosChild2 = { 3.5f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_endPosChild2 = { 0.f, 0.f, 0.f };
+	DirectX::XMFLOAT4 m_startRotChild2;
+	DirectX::XMFLOAT4 m_endRotChild2;
 
 	DirectX::XMMATRIX translationMatrix = DirectX::XMMatrixIdentity();
 	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixIdentity();
