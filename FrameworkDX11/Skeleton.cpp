@@ -48,7 +48,6 @@ int Skeleton::AddJoint(int parentIndex, const DirectX::XMFLOAT4X4& localBindTran
     return newJointIndex;
 }
 
-
 // Helper function to get a node's local transform.
 // This avoids code duplication.
 DirectX::XMFLOAT4X4 GetNodeLocalTransform(const tinygltf::Node& node)
@@ -182,9 +181,11 @@ void Skeleton::Update(float deltaTime)
 
     //m_currentAnimationTime = 0.5f; // useful for testing
 
-    for (int rootIndex : m_rootJointIndices) {
+    for (int rootIndex : m_rootJointIndices) 
+    {
         UpdateJointTransform(rootIndex, m_pCurrentAnimation, m_currentAnimationTime, DirectX::XMMatrixIdentity());
     }
+
     for (size_t i = 0; i < m_joints.size(); ++i) {
         XMMATRIX inv = XMLoadFloat4x4(&m_joints[i].inverseBindMatrix);
         XMMATRIX finalTransform = XMLoadFloat4x4(&m_joints[i].finalTransform);

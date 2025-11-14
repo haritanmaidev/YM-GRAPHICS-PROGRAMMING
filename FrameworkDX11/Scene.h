@@ -53,8 +53,9 @@ public:
 	LightPropertiesConstantBuffer m_lightProperties;
 	IRenderingContext m_ctx;
 	SceneGraph m_sceneobject;
+	SceneGraph m_sceneobject3;
 
-	//------------------------ANIMATION VALUES N STUFF SECTION------------------------
+	//------------------------ WEEK 5,6 - ANIMATION VALUES N STUFF SECTION ------------------------
 	HRESULT AnimationHierarchyInit(); //Custom Animation Hierarchy Init Function
 	Animation m_AnimationClass;
 
@@ -80,6 +81,15 @@ public:
 	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixIdentity();
 	DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixIdentity();
 	float animationTimer = 0.0f;
+
+	//------------------------ WEEK 7.1 - SKELETON STUFF SECTION ------------------------
+	void SkeletonArmInit(); //Custom Skeleton Arm Init Function
+	Animation CreateWaveAnimation(int nodeIndex);
+	void CreateWaveAnimationSampler(int nodeIndex, Animation* anim);
+
+	Skeleton m_robotArmSkeleton;
+	std::vector<SceneNode*> m_armSegmentNodes;
+	std::vector<Animation> m_robotArmAnimations;
 
 private:
 	ID3D11ShaderResourceView* m_pTextureDiffuse;

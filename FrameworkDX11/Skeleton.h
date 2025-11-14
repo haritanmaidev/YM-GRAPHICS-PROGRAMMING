@@ -73,7 +73,7 @@ private:
 
     unsigned int            m_animationCount;
     std::vector<Animation>  m_animations;
-    Animation* m_pCurrentAnimation;
+    Animation*              m_pCurrentAnimation;
     float                   m_currentAnimationTime;
     bool                    m_isLoaded = false;
 };
