@@ -70,6 +70,9 @@ public:
 	DirectX::XMFLOAT4 m_startRotChild1 = { 0.0f, 0.0f, 0.0f, 1.0f };
 	DirectX::XMFLOAT4 m_endRotChild1 = { 0.0f, 0.0f, 90.0f, 1.0f };
 
+	DirectX::XMMATRIX translationMatrix = DirectX::XMMatrixIdentity();
+	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixIdentity();
+	DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixIdentity();
 	float animationTimer = 0.0f;
 
 private:
