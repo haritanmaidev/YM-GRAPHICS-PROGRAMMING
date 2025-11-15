@@ -56,8 +56,8 @@ struct VS_INPUT
     float3 Norm : NORMAL;
     float4 Tangent : TANGENT;
     float2 Tex : TEXCOORD0;
-    uint4 Joints : BLENDINDICES0;
-    float4 Weights : BLENDWEIGHT0;
+    uint4 Joints : BLENDINDICES0; // The indices of the bones influence this vertex
+    float4 Weights : BLENDWEIGHT0; // The weights (influence) of those 4 bones
 };
 
 struct PS_INPUT
@@ -143,14 +143,13 @@ LightingResult ComputeLighting(float4 pixelToLightVectorNormalised, float4 pixel
 PS_INPUT VS( VS_INPUT input )
 {
     PS_INPUT output = (PS_INPUT)0;
+	
     output.Pos = mul( input.Pos, World );
 	output.worldPos = output.Pos;
-    output.Pos = mul( output.Pos, View );
-    output.Pos = mul( output.Pos, Projection );
+    output.Pos = mul(output.Pos, View);
+    output.Pos = mul(output.Pos, Projection);
 
-	// multiply the normal by the world transform (to go from model space to world space)
 	output.Norm = mul(float4(input.Norm, 0), World).xyz;
-
 	output.Tex = input.Tex;
     
     return output;

@@ -53,9 +53,9 @@ public:
 	LightPropertiesConstantBuffer m_lightProperties;
 	IRenderingContext m_ctx;
 	SceneGraph m_sceneobject;
-	SceneGraph m_sceneobject3;
+	SceneGraph m_sceneobjectSkinning;
 
-	//------------------------ WEEK 5,6 - ANIMATION VALUES N STUFF SECTION ------------------------
+	//------------------------ [[WEEK 5,6 - ANIMATION VALUES N STUFF SECTION]] ------------------------
 	HRESULT AnimationHierarchyInit(); //Custom Animation Hierarchy Init Function
 	Animation m_AnimationClass;
 
@@ -82,16 +82,14 @@ public:
 	DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixIdentity();
 	float animationTimer = 0.0f;
 
-	//------------------------ WEEK 7.1 - SKELETON STUFF SECTION ------------------------
-	void SkeletonArmInit(); //Custom Skeleton Arm Init Function
+	//------------------------ [[WEEK 7 - SKELETON STUFF SECTION]] ------------------------
+	void SkeletonArmInit(); //Week 7.1 Custom Skeleton Arm Init Function
 	Animation CreateWaveAnimation();
-	void CreateWaveAnimationSampler(int nodeIndex, Animation* anim, const DirectX::XMFLOAT3& startP,
-	const DirectX::XMFLOAT3& endP, const DirectX::XMFLOAT3& startR, const DirectX::XMFLOAT3& endR,
-	float startAngle, float endAngle);
-
-	Skeleton m_robotArmSkeleton;
-	std::vector<SceneNode*> m_armSegmentNodes;
-	std::vector<Animation> m_robotArmAnimations;
+	void CreateWaveAnimationSampler(int nodeIndex, Animation* anim, const DirectX::XMFLOAT3& startP,const DirectX::XMFLOAT3& endP, const DirectX::XMFLOAT3& startR, const DirectX::XMFLOAT3& endR,float startAngle, float endAngle);
+	
+	void SkeletonPoleInit(); //Week 7.2 Custom Skeleton Pole Init Function
+	Animation* CreatePoleAnimation(Skeleton* skeleton);
+	void CreateWaveAnimationSamplerForPreskin(int nodeIndex, Animation* anim, Skeleton* skeleton);
 
 	//Different node animation values
 	DirectX::XMFLOAT3 m_startPosNode1 = { 0.0f, 0.0f, 0.0f };
@@ -114,6 +112,11 @@ public:
 	DirectX::XMFLOAT3 m_endRotNode3;
 	float m_startAngleNode3 = 0.0f;
 	float m_endAngleNode3 = 0.0f;
+
+	//Main variables for skeleton arm
+	Skeleton m_robotArmSkeleton;
+	std::vector<SceneNode*> m_armSegmentNodes;
+	std::vector<Animation> m_robotArmAnimations;
 
 private:
 	ID3D11ShaderResourceView* m_pTextureDiffuse;

@@ -271,7 +271,6 @@ void Skeleton::UpdateJointTransform(int jointIndex, const Animation* anim, float
 {
     Joint& currentJoint = m_joints[jointIndex];
 
-
     DirectX::XMMATRIX localAnimatedMatrix = GetLocalAnimatedMatrixForJoint(currentJoint, jointIndex, anim, time);
     DirectX::XMMATRIX finalTransform = localAnimatedMatrix * parentTransform;
 

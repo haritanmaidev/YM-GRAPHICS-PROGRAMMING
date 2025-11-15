@@ -19,8 +19,6 @@ Texture2D aoMap : register(t4);
 
 static const float PI = 3.14159265f;
 
-
-
 SamplerState samLinear : register(s0);
 
 #define MAX_LIGHTS 1
@@ -97,7 +95,6 @@ struct PS_INPUT
 	float2 Tex : TEXCOORD0;
 };
 
-
 float4 DoDiffuse(Light light, float3 L, float3 N)
 {
 	float NdotL = max(0, dot(N, L));
@@ -173,14 +170,50 @@ PS_INPUT VS( VS_INPUT input )
 {
     PS_INPUT output = (PS_INPUT) 0;
 	
-	output.Pos = mul(input.Pos, World);
+    float4 skinnedPos = float4(0, 0, 0, 0);
+    float3 skinnedNorm = float3(0, 0, 0);
+	
+    int index0 = input.Joints.x;
+    float4x4 joint0Matrix = g_boneTransforms[index0];
+    float joint0Weight = input.Weights.x;
+    skinnedPos += mul(input.Pos, joint0Matrix) * joint0Weight;
+	
+    int index1 = input.Joints.y;
+    float4x4 joint1Matrix = g_boneTransforms[index1];
+    float joint1Weight = input.Weights.y;
+    skinnedPos += mul(input.Pos, joint1Matrix) * joint1Weight;
+
+    int index2 = input.Joints.z;
+    float4x4 joint2Matrix = g_boneTransforms[index2];
+    float joint2Weight = input.Weights.z;
+    skinnedPos += mul(input.Pos, joint2Matrix) * joint2Weight;
+
+    int index3 = input.Joints.w;
+    float4x4 joint3Matrix = g_boneTransforms[index3];
+    float joint3Weight = input.Weights.w;
+    skinnedPos += mul(input.Pos, joint3Matrix) * joint3Weight;
+	
+    skinnedPos.w = 1.0f;
+	
+	////Cast bone matrix to 3x3 to ignore translation part
+    float3x3 norm0BoneMatrix = (float3x3)joint0Matrix;
+    float3x3 norm1BoneMatrix = (float3x3)joint1Matrix;
+    float3x3 norm2BoneMatrix = (float3x3)joint2Matrix;
+    float3x3 norm3BoneMatrix = (float3x3)joint3Matrix;
+    skinnedNorm += mul(input.Norm, norm0BoneMatrix) * joint0Weight;
+    skinnedNorm += mul(input.Norm, norm1BoneMatrix) * joint1Weight;
+    skinnedNorm += mul(input.Norm, norm2BoneMatrix) * joint2Weight;
+    skinnedNorm += mul(input.Norm, norm3BoneMatrix) * joint3Weight;
+
+	output.Pos = mul(skinnedPos, World);
     output.worldPos = output.Pos;
     output.Pos = mul(output.Pos, View);
     output.Pos = mul(output.Pos, Projection);
-
-    output.Norm = mul(input.Norm, (float3x3) World);
+	
+	// multiply the normal by the world transform (to go from model space to world space)
+    output.Norm = mul(float4(skinnedNorm, 0), World);
     output.Norm = normalize(output.Norm);
-
+	
     output.Tex = input.Tex;
     
     return output;
@@ -189,7 +222,6 @@ PS_INPUT VS( VS_INPUT input )
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
-
 float4 PS(PS_INPUT IN) : SV_TARGET
 {
     float4 lightPos = float4(6, -2, 1, 0);
