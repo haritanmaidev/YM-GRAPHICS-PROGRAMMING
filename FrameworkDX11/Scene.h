@@ -54,7 +54,7 @@ public:
 	IRenderingContext m_ctx;
 	SceneGraph m_sceneobject;
 
-	//------------------------ [[WEEK 5,6 - ANIMATION VALUES N STUFF SECTION]] ------------------------
+	//------------------------ [[WEEK 5,6 - ANIMATION OBJECTS N STUFF SECTION]] ------------------------
 	HRESULT AnimationHierarchyInit(); //Custom Animation Hierarchy Init Function
 	Animation m_AnimationClass;
 
@@ -81,7 +81,7 @@ public:
 	DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixIdentity();
 	float animationTimer = 0.0f;
 
-	//------------------------ [[WEEK 7 - SKELETON STUFF SECTION]] ------------------------
+	//------------------------ [[WEEK 7 - SKELETON STUFF SECTION - Pole & Fox]] ------------------------
 	
 	//Week 7.1 Custom Skeleton Arm Init Function
 	void SkeletonArmInit(); 
@@ -114,11 +114,11 @@ public:
 	float m_startAngleNode3 = 0.0f;
 	float m_endAngleNode3 = 0.0f;
 
-	//Week 7.2 Custom Skeleton Pole Init Function
+	//Week 7.2 Skeleton Pole Init Function
 	void SkeletonPoleInit(); 
 	Animation* CreatePoleAnimation(Skeleton* skeleton);
 	void CreateWaveAnimationSamplerForPreskin(int nodeIndex, Animation* anim, Skeleton* skeleton);
-	
+	//Week 7.2 Fox Init Function
 	void FoxInit();
 
 	SceneGraph m_sceneobjectSkinning;

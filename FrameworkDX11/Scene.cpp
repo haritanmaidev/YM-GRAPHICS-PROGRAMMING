@@ -417,7 +417,7 @@ void Scene::update(const float deltaTime)
     m_pImmediateContext->PSSetConstantBuffers(1, 1, &buf);
 
     //-----------------------------------------|||[[[[[ ANIMATION UPDATE LOGIC HERE]]]]]|||-----------------------------------------
-#pragma region Week6
+#pragma region Week6CustomBalls
     //animationTimer += deltaTime;
     ////Loop through channels and their samplers, then their samplers timestamps to set the animation
     //for (int i = 0; i < m_AnimationClass.m_channels.size(); i++)
@@ -478,7 +478,7 @@ void Scene::update(const float deltaTime)
     //}
 #pragma endregion
 
-#pragma region Week7Part1
+#pragma region Week7Part1RoboArm
     //1. Select and Play Animation: (Here you could use keyboard input or ImGui to choose an animation from your vector)
     static bool doOnce = true;
     if (doOnce)
@@ -506,7 +506,7 @@ void Scene::update(const float deltaTime)
     m_sceneobject AnimateFrame and RenderFrame methods as you may already be doing */
 #pragma endregion
 
-#pragma region Week7Part2
+#pragma region Week7Part2Pole
     //Pole Rig
     Skeleton* s = m_sceneobjectSkinning.GetRootNode(0)->GetSkeleton();
     static bool doOnce2 = true;
@@ -527,6 +527,7 @@ void Scene::update(const float deltaTime)
         m_sceneobjectFox.GetRootNode(0)->GetSkeleton()->PlayAnimation(2);
     }
 
+    //ASK ABOUT THIS---------------------- RENDERFRAE ENDS UP CALLING THE SKELETON'S UPDATE ANYWAY SO WHY DID THE TUTORIAL INCLUDE THIS
     //s->Update(deltaTime);
 
     //Joint* joint = s->GetJoint((unsigned int)0);
