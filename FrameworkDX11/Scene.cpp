@@ -260,19 +260,16 @@ void Scene::SkeletonArmInit()
 
     //--- 3. Create the Animation for the Skeleton --
     m_robotArmAnimations.push_back(CreateWaveAnimation());
-    
-    //Animation combined = CreateWaveAnimation(1);   // adds samplers/channels for node 1
-    //CreateWaveAnimationSampler(2, &combined);      // append samplers/channels for node 2
-    //m_robotArmAnimations.push_back(std::move(combined));
 }
 
 Animation Scene::CreateWaveAnimation() 
 {
+	//The anim node here combines animations for by storing all the animation samplers and channels at the same address/ adding them to the same animation clip
 	Animation animNode;
 	animNode.m_name = "WaveHand_Simple";
-    CreateWaveAnimationSampler(0, &animNode, m_startPosNode1, m_endPosNode1, m_startRotNode1, m_endRotNode1, m_node1StartAngle, m_node1EndAngle);
-    CreateWaveAnimationSampler(1, &animNode, m_startPosNode1, m_endPosNode1, m_startRotNode1, m_endRotNode1, m_node1StartAngle, m_node1EndAngle);
-	CreateWaveAnimationSampler(2, &animNode, m_startPosNode1, m_endPosNode1, m_startRotNode1, m_endRotNode1, m_node1StartAngle, m_node1EndAngle);
+	CreateWaveAnimationSampler(0, &animNode, m_startPosNode1, m_endPosNode1, m_startRotNode1, m_endRotNode1, m_startAngleNode1, m_endAngleNode1);
+    CreateWaveAnimationSampler(1, &animNode, m_startPosNode2, m_endPosNode2, m_startRotNode2, m_endRotNode2, m_startAngleNode2, m_endAngleNode2);
+    CreateWaveAnimationSampler(2, &animNode, m_startPosNode3, m_endPosNode3, m_startRotNode3, m_endRotNode3, m_startAngleNode3, m_endAngleNode3);
     
     return animNode;
 }

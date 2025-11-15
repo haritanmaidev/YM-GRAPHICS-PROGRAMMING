@@ -98,21 +98,22 @@ public:
 	DirectX::XMFLOAT3 m_endPosNode1 = { 0.0f, 2.0f, 0.0f };
 	DirectX::XMFLOAT3 m_startRotNode1 = { 0, 0, 1 };
 	DirectX::XMFLOAT3 m_endRotNode1 = { 0, 0, 1 };
-	float m_node1StartAngle = 0.0f;
-	float m_node1EndAngle = DirectX::XM_PIDIV2;
+	float m_startAngleNode1 = 0.0f;
+	float m_endAngleNode1 = DirectX::XM_PIDIV2;
 
 	DirectX::XMFLOAT3 m_startPosNode2 = { 0.0f, 0.0f, 0.0f };
-	DirectX::XMFLOAT3 m_endPosNode2 = { 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_endPosNode2 = { 1.0f, 1.0f, 0.0f };
 	DirectX::XMFLOAT3 m_startRotNode2;
 	DirectX::XMFLOAT3 m_endRotNode2;
-	float m_node2StartAngle = 0.0f;
-	float m_node2EndAngle = 0.0f;
+	float m_startAngleNode2 = 0.0f;
+	float m_endAngleNode2 = DirectX::XM_PI;
 
 	DirectX::XMFLOAT3 m_startPosNode3 = { 0.0f, 0.0f, 0.0f };
-	DirectX::XMFLOAT3 m_endPosNode3 = { 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_endPosNode3 = { 0.0f, 0.0f, -1.0f };
 	DirectX::XMFLOAT3 m_startRotNode3;
 	DirectX::XMFLOAT3 m_endRotNode3;
-	float m_node3EndAngle = 0.0f;
+	float m_startAngleNode3 = 0.0f;
+	float m_endAngleNode3 = 0.0f;
 
 private:
 	ID3D11ShaderResourceView* m_pTextureDiffuse;
