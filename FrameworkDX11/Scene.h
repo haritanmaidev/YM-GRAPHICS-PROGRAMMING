@@ -53,7 +53,6 @@ public:
 	LightPropertiesConstantBuffer m_lightProperties;
 	IRenderingContext m_ctx;
 	SceneGraph m_sceneobject;
-	SceneGraph m_sceneobjectSkinning;
 
 	//------------------------ [[WEEK 5,6 - ANIMATION VALUES N STUFF SECTION]] ------------------------
 	HRESULT AnimationHierarchyInit(); //Custom Animation Hierarchy Init Function
@@ -83,13 +82,15 @@ public:
 	float animationTimer = 0.0f;
 
 	//------------------------ [[WEEK 7 - SKELETON STUFF SECTION]] ------------------------
-	void SkeletonArmInit(); //Week 7.1 Custom Skeleton Arm Init Function
+	
+	//Week 7.1 Custom Skeleton Arm Init Function
+	void SkeletonArmInit(); 
 	Animation CreateWaveAnimation();
 	void CreateWaveAnimationSampler(int nodeIndex, Animation* anim, const DirectX::XMFLOAT3& startP,const DirectX::XMFLOAT3& endP, const DirectX::XMFLOAT3& startR, const DirectX::XMFLOAT3& endR,float startAngle, float endAngle);
-	
-	void SkeletonPoleInit(); //Week 7.2 Custom Skeleton Pole Init Function
-	Animation* CreatePoleAnimation(Skeleton* skeleton);
-	void CreateWaveAnimationSamplerForPreskin(int nodeIndex, Animation* anim, Skeleton* skeleton);
+
+	Skeleton m_robotArmSkeleton;
+	std::vector<SceneNode*> m_armSegmentNodes;
+	std::vector<Animation> m_robotArmAnimations;
 
 	//Different node animation values
 	DirectX::XMFLOAT3 m_startPosNode1 = { 0.0f, 0.0f, 0.0f };
@@ -113,10 +114,16 @@ public:
 	float m_startAngleNode3 = 0.0f;
 	float m_endAngleNode3 = 0.0f;
 
-	//Main variables for skeleton arm
-	Skeleton m_robotArmSkeleton;
-	std::vector<SceneNode*> m_armSegmentNodes;
-	std::vector<Animation> m_robotArmAnimations;
+	//Week 7.2 Custom Skeleton Pole Init Function
+	void SkeletonPoleInit(); 
+	Animation* CreatePoleAnimation(Skeleton* skeleton);
+	void CreateWaveAnimationSamplerForPreskin(int nodeIndex, Animation* anim, Skeleton* skeleton);
+	
+	void FoxInit();
+
+	SceneGraph m_sceneobjectSkinning;
+	SceneGraph m_sceneobjectFox;
+
 
 private:
 	ID3D11ShaderResourceView* m_pTextureDiffuse;

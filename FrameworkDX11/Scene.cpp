@@ -68,13 +68,16 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
     //if (bool animInit = AnimationHierarchyInit() == E_FAIL) return E_FAIL;
 
     //-------------------- [[WEEK 7.1 - SKELETON ARM INIT HERE]] --------------------
-    //SkeletonArmInit();
+    SkeletonArmInit();
 
-    //-------------------- [[WEEK 7.2 - SKELETON ARM INIT HERE]] --------------------
+    //-------------------- [[WEEK 7.2 - SIMPLERIG/POLE AND FOX INIT HERE]] --------------------
 	SkeletonPoleInit(); 
-    m_pCamera = new Camera(XMFLOAT3(0, 0, -10), XMFLOAT3(0, 0, 1), XMFLOAT3(0.0f, 1.0f, 0.0f), width, height);
+    FoxInit();
 
-    //m_pCamera = new Camera(XMFLOAT3(0, 0, -6), XMFLOAT3(0, 0, 1), XMFLOAT3(0.0f, 1.0f, 0.0f), width, height);
+    m_pCamera = new Camera(XMFLOAT3(5, 0, 0), XMFLOAT3(-1, 0, 0), XMFLOAT3(0.0f, 1.0f, 0.0f), width, height); //Fox Cam
+    //m_pCamera = new Camera(XMFLOAT3(0, 0, -10), XMFLOAT3(0, 0, 1), XMFLOAT3(0.0f, 1.0f, 0.0f), width, height); //Pole PreSkin Cam
+    //m_pCamera = new Camera(XMFLOAT3(0, 0, -6), XMFLOAT3(0, 0, 1), XMFLOAT3(0.0f, 1.0f, 0.0f), width, height); // RoboArm Cam
+
     // Create the constant buffer
     D3D11_BUFFER_DESC bd = {};
     bd.Usage = D3D11_USAGE_DEFAULT;
@@ -391,6 +394,12 @@ void Scene::CreateWaveAnimationSamplerForPreskin(int nodeIndex, Animation* anim,
     anim->m_channels.push_back(rotChannel);
 }
 
+void Scene::FoxInit() 
+{
+    bool ok = m_sceneobjectFox.LoadGLTFWithSkeleton(m_ctx, L"Resources\\Fox.gltf");
+    m_sceneobjectFox.AddTranslationToRoots({1, 0 ,0});
+}
+
 void Scene::update(const float deltaTime)
 {
     // note the pixel shader and the vertex shader have been set by the renderer class calling this method
@@ -470,59 +479,65 @@ void Scene::update(const float deltaTime)
 #pragma endregion
 
 #pragma region Week7Part1
-   // // --- 1. Select and Play Animation ---
-   // // (Here you could use keyboard input or ImGui to choose an animation from your vector)
+    //1. Select and Play Animation: (Here you could use keyboard input or ImGui to choose an animation from your vector)
+    static bool doOnce = true;
+    if (doOnce)
+    {
+        doOnce = false;
+        if (!m_robotArmAnimations.empty()) 
+        {
+			m_robotArmSkeleton.PlayAnimation(&m_robotArmAnimations[0]);
+        }
+    }
 
-   // static bool doOnce = true;
-   // if (doOnce)
-   // {
-   //     doOnce = false;
-   //     if (!m_robotArmAnimations.empty()) 
-   //     {
-			//m_robotArmSkeleton.PlayAnimation(&m_robotArmAnimations[0]);
-   //     }
-   // }
+    //2. Update the Skeleton's Pose: This function now reads from the Animation object and updates all joint poses.
+    m_robotArmSkeleton.Update(deltaTime);
 
-   // // --- 2. Update the Skeleton's Pose ---
-   // // This function now reads from the Animation object and updates all joint poses.
-   // m_robotArmSkeleton.Update(deltaTime);
+    //3. Sync Visible Nodes with Skeleton (This logic is crucial): This copies the final world matrix of each joint to its visible sphere.
+    for (int i = 0; i < m_robotArmSkeleton.GetBoneCount(); ++i)
+    {
+        Joint* joint = m_robotArmSkeleton.GetJoint(i);
+        DirectX::XMMATRIX finalWorldTransform = XMLoadFloat4x4(&joint->finalTransform);
 
-   // // --- 3. Sync Visible Nodes with Skeleton (This logic is crucial) ---
-   // // This copies the final world matrix of each joint to its visible sphere.
-   // for (int i = 0; i < m_robotArmSkeleton.GetBoneCount(); ++i)
-   // {
-   //     Joint* joint = m_robotArmSkeleton.GetJoint(i);
-   //     DirectX::XMMATRIX finalWorldTransform = XMLoadFloat4x4(&joint->finalTransform);
+        m_armSegmentNodes[i]->SetMatrix(finalWorldTransform);
+    }
 
-   //     m_armSegmentNodes[i]->SetMatrix(finalWorldTransform);
-   // }
-
-   //// /* Note that m_armSegmentNodes is linked to m_sceneobject so you just need to call the 
-   //// m_sceneobject AnimateFrame and RenderFrame methods as you may already be doing */
+   /* Note that m_armSegmentNodes is linked to m_sceneobject so you just need to call the 
+    m_sceneobject AnimateFrame and RenderFrame methods as you may already be doing */
 #pragma endregion
 
 #pragma region Week7Part2
+    //Pole Rig
     Skeleton* s = m_sceneobjectSkinning.GetRootNode(0)->GetSkeleton();
-
     static bool doOnce2 = true;
     if (doOnce2)
     {
         doOnce2 = false;
         if (s->GetAnimationCount() > 0)
         {
-            s->PlayAnimation(1);
+            s->PlayAnimation((unsigned int)1);
         }
     }
 
-    s->Update(deltaTime);
+    //Fox Rig
+    static bool doOnce3 = true;
+    if (doOnce3) 
+    {
+        doOnce3 = false;
+        m_sceneobjectFox.GetRootNode(0)->GetSkeleton()->PlayAnimation(2);
+    }
 
-    Joint* joint = s->GetJoint((unsigned int)0);
-    DirectX::XMMATRIX finalWorldTransform = XMLoadFloat4x4(&joint->finalTransform);
-    m_sceneobjectSkinning.GetRootNode(0)->GetChildNode(0)->SetMatrix(finalWorldTransform);
+    //s->Update(deltaTime);
+
+    //Joint* joint = s->GetJoint((unsigned int)0);
+    //DirectX::XMMATRIX finalWorldTransform = XMLoadFloat4x4(&joint->finalTransform);
+    //m_sceneobjectSkinning.GetRootNode(0)->GetChildNode(0)->SetMatrix(finalWorldTransform);
 #pragma endregion
 
     //m_sceneobject.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made 
     //m_sceneobject.RenderFrame(m_ctx, deltaTime); // renders the object
-    m_sceneobjectSkinning.AnimateFrame(m_ctx);
-    m_sceneobjectSkinning.RenderFrame(m_ctx, deltaTime);
+    //m_sceneobjectSkinning.AnimateFrame(m_ctx);
+    //m_sceneobjectSkinning.RenderFrame(m_ctx, deltaTime);
+    m_sceneobjectFox.AnimateFrame(m_ctx);
+    m_sceneobjectFox.RenderFrame(m_ctx, deltaTime);
 }
