@@ -26,6 +26,15 @@ void Skeleton::PlayAnimation(Animation* anim)
     m_currentAnimationTime = anim->GetStartTime();
 }
 
+void Skeleton::PlayLayeredAnimation(int index, float weight) 
+{
+    AnimationPlayback playback;
+	playback.m_currentPlaybackAnimation = &m_animations[index];
+    playback.m_globalWeight = weight;
+	playback.m_currentTime = playback.m_currentPlaybackAnimation->GetStartTime();
+	m_animationPlayback.push_back(playback);
+}
+
 int Skeleton::AddJoint(int parentIndex, const DirectX::XMFLOAT4X4& localBindTransform)
 {
     Joint newJoint;
@@ -166,37 +175,8 @@ bool Skeleton::LoadFromGltf(const tinygltf::Model& model)
     return true;
 }
 
-void Skeleton::Update(float deltaTime)
-{
-    // Load the root transform we found during loading.
-    DirectX::XMMATRIX rootTransform = DirectX::XMLoadFloat4x4(&m_rootTransform);
 
-    if (m_pCurrentAnimation)
-    {
-        m_currentAnimationTime += deltaTime;
-
-        if (m_currentAnimationTime >= m_pCurrentAnimation->GetEndTime())
-            m_currentAnimationTime = m_pCurrentAnimation->GetStartTime();
-    }
-
-    //m_currentAnimationTime = 0.5f; // useful for testing
-
-    for (int rootIndex : m_rootJointIndices) 
-    {
-        UpdateJointTransform(rootIndex, m_pCurrentAnimation, m_currentAnimationTime, DirectX::XMMatrixIdentity());
-    }
-
-    for (size_t i = 0; i < m_joints.size(); ++i) {
-        XMMATRIX inv = XMLoadFloat4x4(&m_joints[i].inverseBindMatrix);
-        XMMATRIX finalTransform = XMLoadFloat4x4(&m_joints[i].finalTransform);
-        XMMATRIX out = inv * finalTransform;
-        XMStoreFloat4x4(&m_skinningMatrices[i], out);
-    }
-}
-
-DirectX::XMMATRIX GetLocalAnimatedMatrixForJoint(
-    const Joint& joint,
-    int jointIndex,
+DirectX::XMMATRIX GetLocalAnimatedMatrixForJoint(const Joint& joint, int jointIndex,
     const Animation* animation, // Use a pointer to allow for nullptr
     float timeInSeconds)
 {
@@ -266,7 +246,6 @@ DirectX::XMMATRIX GetLocalAnimatedMatrixForJoint(
 }
 
 
-
 void Skeleton::UpdateJointTransform(int jointIndex, const Animation* anim, float time, const DirectX::XMMATRIX& parentTransform)
 {
     Joint& currentJoint = m_joints[jointIndex];
@@ -281,3 +260,116 @@ void Skeleton::UpdateJointTransform(int jointIndex, const Animation* anim, float
     }
 }
 
+// New helper used by blended update to recurse final transforms using precomputed local matrices
+void Skeleton::UpdateJointFinalFromLocal(int jointIndex, const DirectX::XMMATRIX& parentTransform, const std::vector<DirectX::XMMATRIX>& localMats)
+{
+    Joint& currentJoint = m_joints[jointIndex];
+
+    DirectX::XMMATRIX local = localMats[jointIndex];
+    DirectX::XMMATRIX finalTransform = local * parentTransform;
+    XMStoreFloat4x4(&currentJoint.finalTransform, finalTransform);
+
+    for (int childIndex : currentJoint.children) {
+        UpdateJointFinalFromLocal(childIndex, XMLoadFloat4x4(&currentJoint.finalTransform), localMats);
+    }
+}
+
+void Skeleton::Update(float deltaTime)
+{
+    // Load the root transform we found during loading.
+    DirectX::XMMATRIX rootTransform = DirectX::XMLoadFloat4x4(&m_rootTransform);
+
+    if (!m_animationPlayback.empty()) 
+    {
+        for (auto& playback : m_animationPlayback) 
+        {
+            //TODO: Add loop boolean here
+            if (playback.m_currentTime > playback.m_currentPlaybackAnimation->GetEndTime()) 
+            {
+				playback.m_currentTime = playback.m_currentPlaybackAnimation->GetStartTime();
+            }
+        }
+
+        //Precompute blended local matrices for every joint
+        std::vector<DirectX::XMMATRIX> blendedLocalMatrices(m_joints.size());
+        blendedLocalMatrices.resize(m_joints.size());
+
+        for (int i = 0; i < m_joints.size(); ++i)
+        {
+            DirectX::XMVECTOR baseScale, baseRotation, baseTranslation;
+            DirectX::XMMatrixDecompose(&baseScale, &baseRotation, &baseTranslation, DirectX::XMLoadFloat4x4(&m_joints[i].localBindTransform));
+
+            DirectX::XMVECTOR curScale = baseScale;
+            DirectX::XMVECTOR curRotation = baseRotation;
+            DirectX::XMVECTOR curTranslation = baseTranslation;
+
+            for (auto& playback : m_animationPlayback)
+            {
+                float layerWeight = playback.m_globalWeight;
+                if (layerWeight <= 0.0f) continue;
+
+                //Sample this animation's local matrix for this joint
+                DirectX::XMMATRIX layerLocal = GetLocalAnimatedMatrixForJoint(m_joints[i], i, playback.m_currentPlaybackAnimation, playback.m_currentTime);
+
+                //Decompose
+                DirectX::XMVECTOR layerScale, layerRotation, layerTranslation;
+                DirectX::XMMatrixDecompose(&layerScale, &layerRotation, &layerTranslation, layerLocal);
+
+                //Blend based on weight
+                curTranslation = XMVectorLerp(curTranslation, layerTranslation, layerWeight);
+                curRotation = XMQuaternionSlerp(curRotation, layerRotation, layerWeight);
+                curScale = XMVectorLerp(curScale, layerScale, layerWeight);
+            }
+
+            //Recompose
+            DirectX::XMMATRIX localM = DirectX::XMMatrixScalingFromVector(curScale) *
+                DirectX::XMMatrixRotationQuaternion(curRotation) *
+                DirectX::XMMatrixTranslationFromVector(curTranslation);
+
+            blendedLocalMatrices[i] = localM;
+        }
+
+		//Now update final matrices recursively
+        for (int rootIndex : m_rootJointIndices) 
+        {
+			UpdateJointFinalFromLocal(rootIndex, XMLoadFloat4x4(&m_rootTransform), blendedLocalMatrices);
+        }
+
+		//Compute skinning matrices 
+        for(int i = 0; i < m_joints.size(); ++i) 
+        {
+            XMMATRIX inv = XMLoadFloat4x4(&m_joints[i].inverseBindMatrix);
+            XMMATRIX finalTransform = XMLoadFloat4x4(&m_joints[i].finalTransform);
+            XMMATRIX out = inv * finalTransform;
+            XMStoreFloat4x4(&m_skinningMatrices[i], out);
+		}
+
+		return;
+    }
+
+    //OLD ANIMATION LOOP FOR SINGLE ANIMATION
+    if (m_pCurrentAnimation)
+    {
+        m_currentAnimationTime += deltaTime;
+
+        if (m_currentAnimationTime >= m_pCurrentAnimation->GetEndTime())
+            m_currentAnimationTime = m_pCurrentAnimation->GetStartTime();
+    }
+
+    //m_currentAnimationTime = 0.5f; // useful for testing
+
+    for (int rootIndex : m_rootJointIndices)
+    {
+        UpdateJointTransform(rootIndex, m_pCurrentAnimation, m_currentAnimationTime, DirectX::XMMatrixIdentity());
+    }
+
+    for (size_t i = 0; i < m_joints.size(); ++i) {
+        XMMATRIX inv = XMLoadFloat4x4(&m_joints[i].inverseBindMatrix);
+        XMMATRIX finalTransform = XMLoadFloat4x4(&m_joints[i].finalTransform);
+        XMMATRIX out = inv * finalTransform;
+        XMStoreFloat4x4(&m_skinningMatrices[i], out);
+    }
+
+
+
+}

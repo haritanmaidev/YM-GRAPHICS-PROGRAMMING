@@ -1,6 +1,7 @@
 #include "Scene.h"
 #include "DDSTextureLoader.h"
 
+
 //Helper for Translation
 DirectX::XMFLOAT3 BakeTranslationOntoBindPose(const DirectX::XMMATRIX& bindPose, const DirectX::XMFLOAT3& animTranslation)
 {
@@ -417,7 +418,7 @@ void Scene::update(const float deltaTime)
     m_pImmediateContext->PSSetConstantBuffers(1, 1, &buf);
 
     //-----------------------------------------|||[[[[[ ANIMATION UPDATE LOGIC HERE]]]]]|||-----------------------------------------
-#pragma region Week6CustomBalls
+#pragma region Week6 Custom Balls
     //animationTimer += deltaTime;
     ////Loop through channels and their samplers, then their samplers timestamps to set the animation
     //for (int i = 0; i < m_AnimationClass.m_channels.size(); i++)
@@ -478,7 +479,7 @@ void Scene::update(const float deltaTime)
     //}
 #pragma endregion
 
-#pragma region Week7Part1RoboArm
+#pragma region Week7 Part1 RoboArm
     //1. Select and Play Animation: (Here you could use keyboard input or ImGui to choose an animation from your vector)
     static bool doOnce = true;
     if (doOnce)
@@ -506,7 +507,7 @@ void Scene::update(const float deltaTime)
     m_sceneobject AnimateFrame and RenderFrame methods as you may already be doing */
 #pragma endregion
 
-#pragma region Week7Part2Pole
+#pragma region Week7 Part2 Pole and Fox + Week 8 Blending
     //Pole Rig
     Skeleton* s = m_sceneobjectSkinning.GetRootNode(0)->GetSkeleton();
     static bool doOnce2 = true;
@@ -520,17 +521,45 @@ void Scene::update(const float deltaTime)
     }
 
     //Fox Rig
-    static bool doOnce3 = true;
-    if (doOnce3) 
-    {
-        doOnce3 = false;
-        m_sceneobjectFox.GetRootNode(0)->GetSkeleton()->PlayAnimation(2);
+	Skeleton* skeletonFox = m_sceneobjectFox.GetRootNode(0)->GetSkeleton();
+
+	skeletonFox->ClearLayeredAnimations();
+    skeletonFox->PlayLayeredAnimation(2, 1.0f);
+	skeletonFox->PlayLayeredAnimation(1, 0.5f);
+
+    auto* p = skeletonFox->GetActiveAnimationPlayback(1); // second layer
+    if (p) {
+        // fade in quickly over 0.5 seconds, for example
+        float fadeSpeed = 2.0f; // 1 / fadeDuration
+        p->m_globalWeight = p->m_globalWeight + deltaTime * fadeSpeed;
+		if (p->m_globalWeight > 1.0f) p->m_globalWeight = 1.0f;
+        // to fade out, subtract instead
     }
 
-    //ASK ABOUT THIS---------------------- RENDERFRAE ENDS UP CALLING THE SKELETON'S UPDATE ANYWAY SO WHY DID THE TUTORIAL INCLUDE THIS
+	skeletonFox->Update(deltaTime);
+
+
+    //3. Sync Visible Nodes with Skeleton (This logic is crucial): This copies the final world matrix of each joint to its visible sphere.
+    for (int i = 0; i < skeletonFox->GetBoneCount(); ++i)
+    {
+        Joint* joint = skeletonFox->GetJoint(i);
+        DirectX::XMMATRIX finalWorldTransform = XMLoadFloat4x4(&joint->finalTransform);
+
+        m_sceneobjectFox.GetRootNode(0)->SetMatrix(finalWorldTransform);
+    }
+
+    //static bool doOnce3 = true;
+    //if (doOnce3) 
+    //{
+    //    doOnce3 = false;
+    //    m_sceneobjectFox.GetRootNode(0)->GetSkeleton()->PlayAnimation(2);
+    //}
+
+    //ASK ABOUT THIS---- RENDERFRAME ENDS UP CALLING THE SKELETON'S UPDATE ANYWAY SO WHY DID THE TUTORIAL INCLUDE THIS
     //s->Update(deltaTime);
 
-    //Joint* joint = s->GetJoint((unsigned int)0);
+    //ASK IF JOINT 0 IS JOINT 1
+    //Joint* joint = s->GetJoint((unsigned int)1);
     //DirectX::XMMATRIX finalWorldTransform = XMLoadFloat4x4(&joint->finalTransform);
     //m_sceneobjectSkinning.GetRootNode(0)->GetChildNode(0)->SetMatrix(finalWorldTransform);
 #pragma endregion

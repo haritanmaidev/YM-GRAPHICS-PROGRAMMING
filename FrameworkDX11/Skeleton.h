@@ -60,6 +60,26 @@ public:
         m_animationCount = m_animations.size();
 	}
 
+    //----------------- [[WEEK 8 Blending]] ------------------
+    struct AnimationPlayback
+    {
+        const Animation* m_currentPlaybackAnimation = nullptr; //Pointer to animation data
+        float m_currentTime = 0.0f; //Personal playback time
+        float m_globalWeight = 1.0f; //0-1 for fading
+        //Optional
+        bool m_isLooping = false;
+        float m_playbackSpeed = 1.0f;
+    };
+
+    void PlayLayeredAnimation(int animationIndex, float weight);
+    void ClearLayeredAnimations() { m_animationPlayback.clear(); }
+    void UpdateJointFinalFromLocal(int jointIndex, const DirectX::XMMATRIX& parentTransform, const std::vector<DirectX::XMMATRIX>& localMats);
+    int GetActiveAnimationCount() {return m_animationPlayback.size(); }
+	AnimationPlayback* GetActiveAnimationPlayback(int index) { return &m_animationPlayback[index]; }
+    
+    std::vector<Animation> m_activeAnimations;
+    std::vector<AnimationPlayback> m_animationPlayback;
+
 private:
     // Change the signature to accept a pointer.
     void UpdateJointTransform(int jointIndex, const Animation* anim, float time, const DirectX::XMMATRIX& parentTransform);
@@ -82,5 +102,3 @@ private:
     float                   m_currentAnimationTime;
     bool                    m_isLoaded = false;
 };
-
-

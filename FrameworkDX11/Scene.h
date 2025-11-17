@@ -52,7 +52,10 @@ public:
 
 	LightPropertiesConstantBuffer m_lightProperties;
 	IRenderingContext m_ctx;
+
 	SceneGraph m_sceneobject;
+	SceneGraph m_sceneobjectSkinning;
+	SceneGraph m_sceneobjectFox;
 
 	//------------------------ [[WEEK 5,6 - ANIMATION OBJECTS N STUFF SECTION]] ------------------------
 	HRESULT AnimationHierarchyInit(); //Custom Animation Hierarchy Init Function
@@ -120,10 +123,6 @@ public:
 	void CreateWaveAnimationSamplerForPreskin(int nodeIndex, Animation* anim, Skeleton* skeleton);
 	//Week 7.2 Fox Init Function
 	void FoxInit();
-
-	SceneGraph m_sceneobjectSkinning;
-	SceneGraph m_sceneobjectFox;
-
 
 private:
 	ID3D11ShaderResourceView* m_pTextureDiffuse;
