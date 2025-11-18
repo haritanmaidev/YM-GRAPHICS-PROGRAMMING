@@ -53,6 +53,7 @@ private: // methods
 	void	startIMGUIDraw(const unsigned int FPS);
 	void	completeIMGUIDraw();
 	void	CentreMouseInWindow(HWND hWnd);
+	void	dragIMGUIdraw();
 
 
 public: // properties

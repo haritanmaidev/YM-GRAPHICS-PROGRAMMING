@@ -142,7 +142,7 @@ void Scene::setupLightProperties()
     m_lightProperties.Lights[0] = light;
 }
 
-//Week 6 Init
+//Week 6 Init Here
 HRESULT Scene::AnimationHierarchyInit()
 {
     //---------------------|||[[[[[ HIERARCHY CREATION START ]]]]]|||---------------------
@@ -230,7 +230,7 @@ HRESULT Scene::AnimationHierarchyInit()
     //---------------------|||[[[[[ HIERARCHY CREATION END ]]]]]|||---------------------
 }
 
-//Week 7.1 Init
+//Week 7.1 Init & Anim Functions From Here
 void Scene::SkeletonArmInit() 
 {
     const float segmentLength = 2.0f;
@@ -330,7 +330,7 @@ void Scene::CreateWaveAnimationSampler(int nodeIndex, Animation* anim, const Dir
     anim->m_channels.push_back(rotChannel);
 }
 
-//Week 7.2 Init
+//Week 7.2 Init & Anim Functions From Here
 void Scene::SkeletonPoleInit() 
 {
     bool ok = m_sceneobjectSkinning.LoadGLTFWithSkeleton(m_ctx, L"Resources\\simplerig.gltf");
@@ -342,12 +342,12 @@ Animation* Scene::CreatePoleAnimation(Skeleton* skeleton)
 {
     Animation* animNode = new Animation();
     animNode->m_name = "WavePole_PreSkin";
-    CreateWaveAnimationSamplerForPreskin(1 , animNode, skeleton);
+    CreateWaveAnimationSamplerForPole(1 , animNode, skeleton);
 
     return animNode;
 }
 
-void Scene::CreateWaveAnimationSamplerForPreskin(int nodeIndex, Animation* anim, Skeleton* skeleton)
+void Scene::CreateWaveAnimationSamplerForPole(int nodeIndex, Animation* anim, Skeleton* skeleton)
 {
     // Samplers for the hand's translation and rotation.
     AnimationSampler nodeTranslationSampler, nodeRotationSampler;
@@ -397,7 +397,7 @@ void Scene::CreateWaveAnimationSamplerForPreskin(int nodeIndex, Animation* anim,
 void Scene::FoxInit() 
 {
     bool ok = m_sceneobjectFox.LoadGLTFWithSkeleton(m_ctx, L"Resources\\Fox.gltf");
-    m_sceneobjectFox.AddTranslationToRoots({1, 0 ,0});
+    m_sceneobjectFox.AddTranslationToRoots({0, -0.5 ,4});
 }
 
 void Scene::update(const float deltaTime)
@@ -416,7 +416,11 @@ void Scene::update(const float deltaTime)
     ID3D11Buffer* buf = m_pLightConstantBuffer.Get();
     m_pImmediateContext->PSSetConstantBuffers(1, 1, &buf);
 
-    //-----------------------------------------|||[[[[[ ANIMATION UPDATE LOGIC HERE]]]]]|||-----------------------------------------
+    //-------------------------------------|||[[[[[IMGUI Update]]]]]|||-------------------------------------
+    //m_pImmediateContext->UpdateSubresource(m_pConstantBufferAnimation.Get(), 0, nullptr, &m_AnimationBufferValues, 0, 0);
+
+
+    //-------------------------------------|||[[[[[ ANIMATION WEEK 6, 7 LOGIC HERE]]]]]|||-------------------------------------
 #pragma region Week6
     //animationTimer += deltaTime;
     ////Loop through channels and their samplers, then their samplers timestamps to set the animation
@@ -477,8 +481,7 @@ void Scene::update(const float deltaTime)
     //    currentNode->SetMatrix(rotationMatrix * translationMatrix);
     //}
 #pragma endregion
-
-#pragma region Week7Part1
+#pragma region Week7.1 Robot Arm Animations Here
     //1. Select and Play Animation: (Here you could use keyboard input or ImGui to choose an animation from your vector)
     static bool doOnce = true;
     if (doOnce)
@@ -505,8 +508,7 @@ void Scene::update(const float deltaTime)
    /* Note that m_armSegmentNodes is linked to m_sceneobject so you just need to call the 
     m_sceneobject AnimateFrame and RenderFrame methods as you may already be doing */
 #pragma endregion
-
-#pragma region Week7Part2
+#pragma region Week7.2 Pole & Fox Animations Here
     //Pole Rig
     Skeleton* s = m_sceneobjectSkinning.GetRootNode(0)->GetSkeleton();
     static bool doOnce2 = true;
@@ -526,18 +528,12 @@ void Scene::update(const float deltaTime)
         doOnce3 = false;
         m_sceneobjectFox.GetRootNode(0)->GetSkeleton()->PlayAnimation(2);
     }
-
-    //s->Update(deltaTime);
-
-    //Joint* joint = s->GetJoint((unsigned int)0);
-    //DirectX::XMMATRIX finalWorldTransform = XMLoadFloat4x4(&joint->finalTransform);
-    //m_sceneobjectSkinning.GetRootNode(0)->GetChildNode(0)->SetMatrix(finalWorldTransform);
 #pragma endregion
 
-    //m_sceneobject.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made 
-    //m_sceneobject.RenderFrame(m_ctx, deltaTime); // renders the object
-    //m_sceneobjectSkinning.AnimateFrame(m_ctx);
-    //m_sceneobjectSkinning.RenderFrame(m_ctx, deltaTime);
+    m_sceneobject.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made 
+    m_sceneobject.RenderFrame(m_ctx, deltaTime); // renders the object
+    m_sceneobjectSkinning.AnimateFrame(m_ctx);
+    m_sceneobjectSkinning.RenderFrame(m_ctx, deltaTime);
     m_sceneobjectFox.AnimateFrame(m_ctx);
     m_sceneobjectFox.RenderFrame(m_ctx, deltaTime);
 }

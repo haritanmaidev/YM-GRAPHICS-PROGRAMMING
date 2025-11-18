@@ -53,6 +53,8 @@ public:
 	LightPropertiesConstantBuffer m_lightProperties;
 	IRenderingContext m_ctx;
 	SceneGraph m_sceneobject;
+	SceneGraph m_sceneobjectSkinning;
+	SceneGraph m_sceneobjectFox;
 
 	//------------------------ [[WEEK 5,6 - ANIMATION VALUES N STUFF SECTION]] ------------------------
 	HRESULT AnimationHierarchyInit(); //Custom Animation Hierarchy Init Function
@@ -81,8 +83,7 @@ public:
 	DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixIdentity();
 	float animationTimer = 0.0f;
 
-	//------------------------ [[WEEK 7 - SKELETON STUFF SECTION]] ------------------------
-	
+	//------------------------ [[START OF WEEK 7 - SKELETON STUFF SECTION]] ------------------------
 	//Week 7.1 Custom Skeleton Arm Init Function
 	void SkeletonArmInit(); 
 	Animation CreateWaveAnimation();
@@ -114,16 +115,18 @@ public:
 	float m_startAngleNode3 = 0.0f;
 	float m_endAngleNode3 = 0.0f;
 
-	//Week 7.2 Custom Skeleton Pole Init Function
+	//RobotArm IMGUI
+	//Microsoft::WRL::ComPtr <ID3D11Buffer>m_pConstantBufferAnimation;
+	//ConstantBufferAnimation m_AnimationBufferValues;
+	//ConstantBufferAnimation& GetAnimationBufferValues() { return m_AnimationBufferValues; }
+
+	//Week 7.2 Custom Skeleton Pole & Fox
 	void SkeletonPoleInit(); 
 	Animation* CreatePoleAnimation(Skeleton* skeleton);
-	void CreateWaveAnimationSamplerForPreskin(int nodeIndex, Animation* anim, Skeleton* skeleton);
+	void CreateWaveAnimationSamplerForPole(int nodeIndex, Animation* anim, Skeleton* skeleton);
 	
 	void FoxInit();
-
-	SceneGraph m_sceneobjectSkinning;
-	SceneGraph m_sceneobjectFox;
-
+	//------------------------ [[END OF WEEK 7 - SKELETON STUFF SECTION]] ------------------------
 
 private:
 	ID3D11ShaderResourceView* m_pTextureDiffuse;

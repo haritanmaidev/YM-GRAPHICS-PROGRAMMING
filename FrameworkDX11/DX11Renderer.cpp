@@ -7,7 +7,7 @@
 #include "d3dcompiler.h"
 
 // TRUE - PBR Rendering / FALSE - Animation Rendering
-constexpr bool PBR_MODE = false;
+constexpr bool PBR_MODE = true;
 
 #pragma region Class lifetime
 
@@ -496,6 +496,49 @@ void DX11Renderer::CentreMouseInWindow(HWND hWnd)
     SetCursorPos(center.x, center.y);
 }
 
+void DX11Renderer::dragIMGUIdraw() 
+{
+   // ConstantBufferAnimation& animValues = m_pScene->GetAnimationBufferValues();
+    XMFLOAT3 initialStartPos = m_pScene->m_startPosNode1;
+    if (ImGui::InputFloat3("Start Position", &m_pScene->m_startPosNode1.x)) 
+    {
+        m_pScene->m_robotArmAnimations.clear();
+        Animation anim;
+        m_pScene->CreateWaveAnimationSampler(0, &anim, m_pScene->m_startPosNode1, m_pScene->m_endPosNode1, m_pScene->m_startRotNode1, m_pScene->m_endRotNode1, m_pScene->m_startAngleNode1, m_pScene->m_endAngleNode1);
+        m_pScene->m_robotArmAnimations.push_back(anim);
+
+    }
+
+    //Week 6 Imgui
+    //if (ImGui::TreeNode("Tree Nodes"))
+    //{
+    //    // See see "Examples -> Property Editor" (ShowExampleAppPropertyEditor() function) for a fancier, data-driven tree.
+    //    if (ImGui::TreeNode("Basic trees"))
+    //    {
+    //        for (int i = 0; i < 5; i++)
+    //        {
+    //            // Use SetNextItemOpen() so set the default state of a node to be open. We could
+    //            // also use TreeNodeEx() with the ImGuiTreeNodeFlags_DefaultOpen flag to achieve the same thing!
+    //            if (i == 0)
+    //                ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+
+    //            // Here we use PushID() to generate a unique base ID, and then the "" used as TreeNode id won't conflict.
+    //            // An alternative to using 'PushID() + TreeNode("", ...)' to generate a unique ID is to use 'TreeNode((void*)(intptr_t)i, ...)',
+    //            // aka generate a dummy pointer-sized value to be hashed. The demo below uses that technique. Both are fine.
+    //            ImGui::PushID(i);
+    //            if (ImGui::TreeNode("", "Child %d", i))
+    //            {
+    //                ImGui::Text("blah blah");
+    //                ImGui::SameLine();
+    //                if (ImGui::SmallButton("button")) {}
+    //                ImGui::TreePop();
+    //            }
+    //            ImGui::PopID();
+    //        }
+    //        ImGui::TreePop();
+    //    }
+    //}
+}
 
 void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
 {
@@ -506,7 +549,7 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
 
     // YOU will want to modify this for your own debug, controls etc - comment it out to hide the window
     //ImGui::ShowMetricsWindow();
-    ImGui::SetWindowFontScale(4.0f);
+    ImGui::SetWindowFontScale(3.0f);
     ImGui::Text("FPS %d", FPS);
     ImGui::SetWindowFontScale(1.0f);
     ImGui::Spacing();
@@ -519,8 +562,6 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
     ImGui::Spacing();
 
     ImGui::SliderInt("Number of Cubes", &g_cube_count, 2, max_number_of_boxes);*/
-
-    
 }
 
 void DX11Renderer::completeIMGUIDraw()
@@ -545,6 +586,7 @@ void DX11Renderer::update(const float deltaTime)
     }
 
     startIMGUIDraw(FPS);
+    dragIMGUIdraw();
 
     // Clear the back buffer
     float blueish[4] = { 0.2, 0.2, 1, 1 };

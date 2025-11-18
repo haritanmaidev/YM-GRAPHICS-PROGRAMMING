@@ -20,7 +20,24 @@ struct ConstantBuffer
 	unsigned int bone_count;
 };
 
+struct ConstantBufferAnimation 
+{
+	ConstantBufferAnimation();
 
+	//int nodeIndex;
+	//Animation* anim;
+	//XMFLOAT3 startPosition = { 0, 0, 0 };
+	//float padding1;
+	//XMFLOAT3 endPosition = { 0, 0, 0 };
+	//float padding2;
+	//XMFLOAT3 startRotation = { 0, 0, 0 };
+	//float padding3;
+	//XMFLOAT3 endRotation = { 0, 0, 0 };
+	//float padding4;
+	//float startAngle = 0;
+	//float endAngle = 0;
+
+};
 
 enum LightType
 {
