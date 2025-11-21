@@ -24,7 +24,6 @@
 
 class Scene;
 
-
 struct ImGuiParameterState
 {
 	int selected_radio;
@@ -53,8 +52,6 @@ private: // methods
 	void	startIMGUIDraw(const unsigned int FPS);
 	void	completeIMGUIDraw();
 	void	CentreMouseInWindow(HWND hWnd);
-	void	dragIMGUIdraw();
-
 
 public: // properties
 
@@ -79,7 +76,5 @@ public: // properties
 
 
 	Scene* m_pScene;
-	
-
 };
 

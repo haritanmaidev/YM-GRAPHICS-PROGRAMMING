@@ -254,6 +254,7 @@ void Scene::SkeletonArmInit()
 
     //Initialize default animation values for each joint/node
 	int jointCount = m_robotArmSkeleton.GetBoneCount();
+	m_nodeAnimValues.resize(jointCount);
     if (jointCount > 0) {
         m_nodeAnimValues[0].startPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
         m_nodeAnimValues[0].endPos = DirectX::XMFLOAT3{ 0.0f, 2.0f, 0.0f };

@@ -173,10 +173,8 @@ void Skeleton::Update(float deltaTime)
 
     if (m_pCurrentAnimation)
     {
-        m_currentAnimationTime += deltaTime;
-
-        if (m_currentAnimationTime >= m_pCurrentAnimation->GetEndTime())
-            m_currentAnimationTime = m_pCurrentAnimation->GetStartTime();
+        if(!m_isPaused) m_currentAnimationTime += deltaTime;
+        if (m_currentAnimationTime >= m_pCurrentAnimation->GetEndTime())  m_currentAnimationTime = m_pCurrentAnimation->GetStartTime();
     }
 
     //m_currentAnimationTime = 0.5f; // useful for testing

@@ -7,7 +7,7 @@
 #include "d3dcompiler.h"
 
 // TRUE - PBR Rendering / FALSE - Animation Rendering
-constexpr bool PBR_MODE = false;
+constexpr bool PBR_MODE = true;
 
 #pragma region Class lifetime
 
@@ -496,77 +496,6 @@ void DX11Renderer::CentreMouseInWindow(HWND hWnd)
     SetCursorPos(center.x, center.y);
 }
 
-void DX11Renderer::dragIMGUIdraw() 
-{
-    static bool animChanged = false;
-
-    //Node 1
-    if (ImGui::InputFloat3("Start Position", &m_pScene->m_startPosNode1.x))  animChanged = true;
-    if (ImGui::InputFloat3("End Position", &m_pScene->m_endPosNode1.x)) animChanged = true;
-
-    if (ImGui::SliderAngle("Start Rotation", &m_pScene->m_startAngleNode1)) animChanged = true;
-    if (ImGui::SliderAngle("End Rotation", &m_pScene->m_endAngleNode1)) animChanged = true;
-
-    ImGui::Separator();
-    //Node 2
-    if (ImGui::InputFloat3("Start Position Node 2", &m_pScene->m_startPosNode2.x)) animChanged = true;
-    if (ImGui::InputFloat3("End Position Node 2", &m_pScene->m_endPosNode2.x)) animChanged = true;
-
-    if (ImGui::SliderAngle("Start Rotation Node 2", &m_pScene->m_startAngleNode2)) animChanged = true;
-    if (ImGui::SliderAngle("End Rotation Node 2", &m_pScene->m_endAngleNode2)) animChanged = true;
-
-    ImGui::Separator();
-    //Node 3
-    if (ImGui::InputFloat3("Start Position Node 2", &m_pScene->m_startPosNode3.x)) animChanged = true;
-    if (ImGui::InputFloat3("End Position Node 2", &m_pScene->m_endPosNode3.x)) animChanged = true;
-
-    if (ImGui::SliderAngle("Start Rotation Node 3", &m_pScene->m_startAngleNode3)) animChanged = true;
-    if (ImGui::SliderAngle("End Rotation Node 3", &m_pScene->m_endAngleNode3)) animChanged = true;
-
-    if (animChanged) 
-    {
-        Animation newAnim = m_pScene->CreateWaveAnimation();
-
-        if (m_pScene->m_robotArmAnimations.empty()) 
-        {
-            m_pScene->m_robotArmAnimations.push_back(newAnim);
-        }
-
-        m_pScene->m_robotArmAnimations[0] = newAnim;
-        animChanged = false;
-    }
-
-    //Week 6 Imgui
-    //if (ImGui::TreeNode("Tree Nodes"))
-    //{
-    //    // See see "Examples -> Property Editor" (ShowExampleAppPropertyEditor() function) for a fancier, data-driven tree.
-    //    if (ImGui::TreeNode("Basic trees"))
-    //    {
-    //        for (int i = 0; i < 5; i++)
-    //        {
-    //            // Use SetNextItemOpen() so set the default state of a node to be open. We could
-    //            // also use TreeNodeEx() with the ImGuiTreeNodeFlags_DefaultOpen flag to achieve the same thing!
-    //            if (i == 0)
-    //                ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-
-    //            // Here we use PushID() to generate a unique base ID, and then the "" used as TreeNode id won't conflict.
-    //            // An alternative to using 'PushID() + TreeNode("", ...)' to generate a unique ID is to use 'TreeNode((void*)(intptr_t)i, ...)',
-    //            // aka generate a dummy pointer-sized value to be hashed. The demo below uses that technique. Both are fine.
-    //            ImGui::PushID(i);
-    //            if (ImGui::TreeNode("", "Child %d", i))
-    //            {
-    //                ImGui::Text("blah blah");
-    //                ImGui::SameLine();
-    //                if (ImGui::SmallButton("button")) {}
-    //                ImGui::TreePop();
-    //            }
-    //            ImGui::PopID();
-    //        }
-    //        ImGui::TreePop();
-    //    }
-    //}
-}
-
 void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
 {
     // Start the Dear ImGui frame
@@ -580,6 +509,73 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
     ImGui::Text("FPS %d", FPS);
     ImGui::SetWindowFontScale(1.0f);
     ImGui::Spacing();
+
+    if (ImGui::Button("Pause/Play"))
+    {
+        m_pScene->m_robotArmSkeleton.m_isPaused = !m_pScene->m_robotArmSkeleton.m_isPaused;
+    }
+
+    static bool animChanged = false;
+    int nodeCount = m_pScene->m_nodeAnimValues.size();
+
+    for (int i = 0; i < nodeCount; ++i)
+    {
+        ImGui::PushID(i);
+        std::string header = "Node " + std::to_string(i);
+
+        if (ImGui::CollapsingHeader(header.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            if (ImGui::InputFloat3("Start Position", &m_pScene->m_nodeAnimValues[i].startPos.x))  animChanged = true;
+            if (ImGui::InputFloat3("End Position", &m_pScene->m_nodeAnimValues[i].endPos.x)) animChanged = true;
+            if (ImGui::SliderAngle("Start Rotation", &m_pScene->m_nodeAnimValues[i].startAngle)) animChanged = true;
+            if (ImGui::SliderAngle("End Rotation", &m_pScene->m_nodeAnimValues[i].endAngle)) animChanged = true;
+        }
+
+        ImGui::PopID();
+    }
+
+    if (animChanged)
+    {
+        Animation newAnim = m_pScene->CreateWaveAnimation();
+
+        if (m_pScene->m_robotArmAnimations.empty())
+        {
+            m_pScene->m_robotArmAnimations.push_back(newAnim);
+        }
+
+        m_pScene->m_robotArmAnimations[0] = newAnim;
+        animChanged = false;
+    }
+
+    //Week 6 Imgui
+//if (ImGui::TreeNode("Tree Nodes"))
+//{
+//    // See see "Examples -> Property Editor" (ShowExampleAppPropertyEditor() function) for a fancier, data-driven tree.
+//    if (ImGui::TreeNode("Basic trees"))
+//    {
+//        for (int i = 0; i < 5; i++)
+//        {
+//            // Use SetNextItemOpen() so set the default state of a node to be open. We could
+//            // also use TreeNodeEx() with the ImGuiTreeNodeFlags_DefaultOpen flag to achieve the same thing!
+//            if (i == 0)
+//                ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+
+//            // Here we use PushID() to generate a unique base ID, and then the "" used as TreeNode id won't conflict.
+//            // An alternative to using 'PushID() + TreeNode("", ...)' to generate a unique ID is to use 'TreeNode((void*)(intptr_t)i, ...)',
+//            // aka generate a dummy pointer-sized value to be hashed. The demo below uses that technique. Both are fine.
+//            ImGui::PushID(i);
+//            if (ImGui::TreeNode("", "Child %d", i))
+//            {
+//                ImGui::Text("blah blah");
+//                ImGui::SameLine();
+//                if (ImGui::SmallButton("button")) {}
+//                ImGui::TreePop();
+//            }
+//            ImGui::PopID();
+//        }
+//        ImGui::TreePop();
+//    }
+//}
 
     // example usage
     /*if (ImGui::RadioButton("Single threaded CPU", g_ttype == use_cpu_singlethread)) g_ttype = use_cpu_singlethread;
@@ -613,7 +609,6 @@ void DX11Renderer::update(const float deltaTime)
     }
 
     startIMGUIDraw(FPS);
-    dragIMGUIdraw();
 
     // Clear the back buffer
     float blueish[4] = { 0.2, 0.2, 1, 1 };

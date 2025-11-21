@@ -83,7 +83,7 @@ public:
 	DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixIdentity();
 	float animationTimer = 0.0f;
 
-	//------------------------ [[START OF WEEK 7 - SKELETON STUFF SECTION]] ------------------------
+	//------------------------ [[START OF WEEK 7.1 - SKELETON STUFF SECTION]] ------------------------
 	//Week 7.1 Custom Skeleton Arm Init Function
 	void SkeletonArmInit(); 
 	Animation CreateWaveAnimation();

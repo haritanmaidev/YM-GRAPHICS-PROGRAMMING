@@ -60,6 +60,8 @@ public:
         m_animationCount = m_animations.size();
 	}
 
+    bool m_isPaused = false;
+
 private:
     // Change the signature to accept a pointer.
     void UpdateJointTransform(int jointIndex, const Animation* anim, float time, const DirectX::XMMATRIX& parentTransform);
