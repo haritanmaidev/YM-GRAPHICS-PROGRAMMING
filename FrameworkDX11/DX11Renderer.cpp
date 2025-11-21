@@ -7,7 +7,7 @@
 #include "d3dcompiler.h"
 
 // TRUE - PBR Rendering / FALSE - Animation Rendering
-constexpr bool PBR_MODE = true;
+constexpr bool PBR_MODE = false;
 
 #pragma region Class lifetime
 
@@ -516,6 +516,12 @@ void DX11Renderer::dragIMGUIdraw()
     if (ImGui::SliderAngle("End Rotation Node 2", &m_pScene->m_endAngleNode2)) animChanged = true;
 
     ImGui::Separator();
+    //Node 3
+    if (ImGui::InputFloat3("Start Position Node 2", &m_pScene->m_startPosNode3.x)) animChanged = true;
+    if (ImGui::InputFloat3("End Position Node 2", &m_pScene->m_endPosNode3.x)) animChanged = true;
+
+    if (ImGui::SliderAngle("Start Rotation Node 3", &m_pScene->m_startAngleNode3)) animChanged = true;
+    if (ImGui::SliderAngle("End Rotation Node 3", &m_pScene->m_endAngleNode3)) animChanged = true;
 
     if (animChanged) 
     {
@@ -525,6 +531,7 @@ void DX11Renderer::dragIMGUIdraw()
         {
             m_pScene->m_robotArmAnimations.push_back(newAnim);
         }
+
         m_pScene->m_robotArmAnimations[0] = newAnim;
         animChanged = false;
     }

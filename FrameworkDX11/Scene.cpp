@@ -142,7 +142,7 @@ void Scene::setupLightProperties()
     m_lightProperties.Lights[0] = light;
 }
 
-//Week 6 Init Here
+//-------------------- ===[[[[WEEK 6 Init Definitions here]]]]=== --------------------
 HRESULT Scene::AnimationHierarchyInit()
 {
     //---------------------|||[[[[[ HIERARCHY CREATION START ]]]]]|||---------------------
@@ -230,7 +230,7 @@ HRESULT Scene::AnimationHierarchyInit()
     //---------------------|||[[[[[ HIERARCHY CREATION END ]]]]]|||---------------------
 }
 
-//Week 7.1 Init & Anim Functions From Here
+//-------------------- ===[[[[WEEK 7.1 Init & Anim Definitions here]]]]=== --------------------
 void Scene::SkeletonArmInit() 
 {
     const float segmentLength = 2.0f;
@@ -251,6 +251,33 @@ void Scene::SkeletonArmInit()
     DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0.0f, segmentLength, 0.0f);
     DirectX::XMStoreFloat4x4(&handTransform, scale * translation);
     int handIndex = m_robotArmSkeleton.AddJoint(elbowIndex, handTransform);
+
+    //Initialize default animation values for each joint/node
+	int jointCount = m_robotArmSkeleton.GetBoneCount();
+    if (jointCount > 0) {
+        m_nodeAnimValues[0].startPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+        m_nodeAnimValues[0].endPos = DirectX::XMFLOAT3{ 0.0f, 2.0f, 0.0f };
+        m_nodeAnimValues[0].startRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
+        m_nodeAnimValues[0].endRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
+        m_nodeAnimValues[0].startAngle = 0.0f;
+        m_nodeAnimValues[0].endAngle = DirectX::XM_PIDIV2;
+    }
+    if (jointCount > 1) {
+        m_nodeAnimValues[1].startPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+        m_nodeAnimValues[1].endPos = DirectX::XMFLOAT3{ 1.0f, 1.0f, 0.0f };
+        m_nodeAnimValues[1].startRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
+        m_nodeAnimValues[1].endRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
+        m_nodeAnimValues[1].startAngle = 0.0f;
+        m_nodeAnimValues[1].endAngle = DirectX::XM_PI;
+    }
+    if (jointCount > 2) {
+        m_nodeAnimValues[2].startPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+        m_nodeAnimValues[2].endPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, -1.0f };
+        m_nodeAnimValues[2].startRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
+        m_nodeAnimValues[2].endRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
+        m_nodeAnimValues[2].startAngle = 0.0f;
+        m_nodeAnimValues[2].endAngle = 0.0f;
+    }
 
     //root nodes migh change as the vector is resized, so this must be done first
     for (int i = 0; i < m_robotArmSkeleton.GetBoneCount(); i++)
@@ -276,9 +303,12 @@ Animation Scene::CreateWaveAnimation()
 	//The anim node here combines animations for by storing all the animation samplers and channels at the same address/ adding them to the same animation clip
 	Animation animNode;
 	animNode.m_name = "WaveHand_Simple";
-	CreateWaveAnimationSampler(0, &animNode, m_startPosNode1, m_endPosNode1, m_startRotNode1, m_endRotNode1, m_startAngleNode1, m_endAngleNode1);
-    CreateWaveAnimationSampler(1, &animNode, m_startPosNode2, m_endPosNode2, m_startRotNode2, m_endRotNode2, m_startAngleNode2, m_endAngleNode2);
-    CreateWaveAnimationSampler(2, &animNode, m_startPosNode3, m_endPosNode3, m_startRotNode3, m_endRotNode3, m_startAngleNode3, m_endAngleNode3);
+
+    for (int i = 0; i < m_nodeAnimValues.size(); i++) 
+    {
+		NodeAnimationValues& currentNodeValues = m_nodeAnimValues[i];
+		CreateWaveAnimationSampler(i, &animNode, currentNodeValues.startPos, currentNodeValues.endPos, currentNodeValues.startRot, currentNodeValues.endRot, currentNodeValues.startAngle, currentNodeValues.endAngle);
+    }
 
     return animNode;
 }
@@ -330,7 +360,7 @@ void Scene::CreateWaveAnimationSampler(int nodeIndex, Animation* anim, const Dir
     anim->m_channels.push_back(rotChannel);
 }
 
-//Week 7.2 Init & Anim Functions From Here
+//-------------------- ===[[[[WEEK 7.2 Pole & Fox Definitions here]]]]=== --------------------
 void Scene::SkeletonPoleInit() 
 {
     bool ok = m_sceneobjectSkinning.LoadGLTFWithSkeleton(m_ctx, L"Resources\\simplerig.gltf");
