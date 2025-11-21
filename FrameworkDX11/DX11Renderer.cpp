@@ -503,21 +503,46 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    // YOU will want to modify this for your own debug, controls etc - comment it out to hide the window
     //ImGui::ShowMetricsWindow();
     ImGui::SetWindowFontScale(3.0f);
     ImGui::Text("FPS %d", FPS);
     ImGui::SetWindowFontScale(1.0f);
     ImGui::Spacing();
 
+
+	//----------------------------[[[[ Week 7.1 Robot Arm Component ]]]]----------------------------
+	int animCount = m_pScene->m_robotArmAnimations.size();
+    static int currentAnimIndex = 0;
+
+    //Store name of animations for Imgui Combo
+    std::vector<const char*> animNames;
+    for (int i = 0; i < animCount; ++i)
+    {
+        animNames.push_back(m_pScene->m_robotArmAnimations[i].m_name.c_str());
+    }
+
+    //Replay and Pause buttons
+    if (ImGui::Button("Play From Start"))
+    {
+        m_pScene->m_robotArmSkeleton.PlayAnimation(&m_pScene->m_robotArmAnimations[currentAnimIndex]);
+    }
+    ImGui::SameLine();
     if (ImGui::Button("Pause/Play"))
     {
         m_pScene->m_robotArmSkeleton.m_isPaused = !m_pScene->m_robotArmSkeleton.m_isPaused;
     }
 
+	//Selecting and playing different animations from combo box
+    if (ImGui::Combo("Robot Arm Animations", &currentAnimIndex, animNames.data(), animCount))
+    {
+        m_pScene->m_robotArmSkeleton.PlayAnimation(&m_pScene->m_robotArmAnimations[currentAnimIndex]);
+    }
+
+    ImGui::Separator();
+
+    // Controlling the current animation at any level in hierarchy
     static bool animChanged = false;
     int nodeCount = m_pScene->m_nodeAnimValues.size();
-
     for (int i = 0; i < nodeCount; ++i)
     {
         ImGui::PushID(i);

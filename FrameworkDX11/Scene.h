@@ -105,11 +105,6 @@ public:
 
 	std::vector<NodeAnimationValues> m_nodeAnimValues;
 
-	//RobotArm IMGUI
-	//Microsoft::WRL::ComPtr <ID3D11Buffer>m_pConstantBufferAnimation;
-	//ConstantBufferAnimation m_AnimationBufferValues;
-	//ConstantBufferAnimation& GetAnimationBufferValues() { return m_AnimationBufferValues; }
-
 	//Week 7.2 Custom Skeleton Pole & Fox
 	void SkeletonPoleInit(); 
 	Animation* CreatePoleAnimation(Skeleton* skeleton);
