@@ -96,8 +96,8 @@ public:
 	//Different node animation values
 	DirectX::XMFLOAT3 m_startPosNode1 = { 0.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT3 m_endPosNode1 = { 0.0f, 2.0f, 0.0f };
-	DirectX::XMFLOAT3 m_startRotNode1 = { 0, 0, 1 };
-	DirectX::XMFLOAT3 m_endRotNode1 = { 0, 0, 1 };
+	DirectX::XMFLOAT3 m_startRotNode1 = { 0.0f, 0.0f, 1.0f };
+	DirectX::XMFLOAT3 m_endRotNode1 = { 0.0f, 0.0f, 1.0f };
 	float m_startAngleNode1 = 0.0f;
 	float m_endAngleNode1 = DirectX::XM_PIDIV2;
 

@@ -498,15 +498,35 @@ void DX11Renderer::CentreMouseInWindow(HWND hWnd)
 
 void DX11Renderer::dragIMGUIdraw() 
 {
-   // ConstantBufferAnimation& animValues = m_pScene->GetAnimationBufferValues();
-    XMFLOAT3 initialStartPos = m_pScene->m_startPosNode1;
-    if (ImGui::InputFloat3("Start Position", &m_pScene->m_startPosNode1.x)) 
-    {
-        m_pScene->m_robotArmAnimations.clear();
-        Animation anim;
-        m_pScene->CreateWaveAnimationSampler(0, &anim, m_pScene->m_startPosNode1, m_pScene->m_endPosNode1, m_pScene->m_startRotNode1, m_pScene->m_endRotNode1, m_pScene->m_startAngleNode1, m_pScene->m_endAngleNode1);
-        m_pScene->m_robotArmAnimations.push_back(anim);
+    static bool animChanged = false;
 
+    //Node 1
+    if (ImGui::InputFloat3("Start Position", &m_pScene->m_startPosNode1.x))  animChanged = true;
+    if (ImGui::InputFloat3("End Position", &m_pScene->m_endPosNode1.x)) animChanged = true;
+
+    if (ImGui::SliderAngle("Start Rotation", &m_pScene->m_startAngleNode1)) animChanged = true;
+    if (ImGui::SliderAngle("End Rotation", &m_pScene->m_endAngleNode1)) animChanged = true;
+
+    ImGui::Separator();
+    //Node 2
+    if (ImGui::InputFloat3("Start Position Node 2", &m_pScene->m_startPosNode2.x)) animChanged = true;
+    if (ImGui::InputFloat3("End Position Node 2", &m_pScene->m_endPosNode2.x)) animChanged = true;
+
+    if (ImGui::SliderAngle("Start Rotation Node 2", &m_pScene->m_startAngleNode2)) animChanged = true;
+    if (ImGui::SliderAngle("End Rotation Node 2", &m_pScene->m_endAngleNode2)) animChanged = true;
+
+    ImGui::Separator();
+
+    if (animChanged) 
+    {
+        Animation newAnim = m_pScene->CreateWaveAnimation();
+
+        if (m_pScene->m_robotArmAnimations.empty()) 
+        {
+            m_pScene->m_robotArmAnimations.push_back(newAnim);
+        }
+        m_pScene->m_robotArmAnimations[0] = newAnim;
+        animChanged = false;
     }
 
     //Week 6 Imgui

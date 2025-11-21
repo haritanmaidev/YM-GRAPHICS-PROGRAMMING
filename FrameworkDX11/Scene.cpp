@@ -304,11 +304,11 @@ void Scene::CreateWaveAnimationSampler(int nodeIndex, Animation* anim, const Dir
     // --- Keyframe 2: The End Pose (t = 2.0s) ---
     // The hand is translated up and rotated 90 degrees to the side.
     XMFLOAT3 endPos = BakeTranslationOntoBindPose(nodeBindPose, endP); // Move up slightly
-    nodeTranslationSampler.timestamps.push_back(2.0f);
+    nodeTranslationSampler.timestamps.push_back(4.0f);
     nodeTranslationSampler.vec3_values.push_back(endPos);
 
     XMFLOAT4 endRot = BakeRotationOntoBindPose(nodeBindPose, endR, endAngle); // Rotate 90 degrees
-    nodeRotationSampler.timestamps.push_back(2.0f);
+    nodeRotationSampler.timestamps.push_back(4.0f);
     nodeRotationSampler.vec4_values.push_back(endRot);
 
     // --- Add Samplers and Channels for the node ---
@@ -415,10 +415,6 @@ void Scene::update(const float deltaTime)
     m_pImmediateContext->UpdateSubresource(m_pLightConstantBuffer.Get(), 0, nullptr, &m_lightProperties, 0, 0);
     ID3D11Buffer* buf = m_pLightConstantBuffer.Get();
     m_pImmediateContext->PSSetConstantBuffers(1, 1, &buf);
-
-    //-------------------------------------|||[[[[[IMGUI Update]]]]]|||-------------------------------------
-    //m_pImmediateContext->UpdateSubresource(m_pConstantBufferAnimation.Get(), 0, nullptr, &m_AnimationBufferValues, 0, 0);
-
 
     //-------------------------------------|||[[[[[ ANIMATION WEEK 6, 7 LOGIC HERE]]]]]|||-------------------------------------
 #pragma region Week6
