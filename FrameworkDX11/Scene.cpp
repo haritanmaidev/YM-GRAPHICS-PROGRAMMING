@@ -1,6 +1,7 @@
 #include "Scene.h"
 #include "DDSTextureLoader.h"
 #include <cmath>
+#include "DX11Renderer.h"
 
 //Helper for Translation
 DirectX::XMFLOAT3 BakeTranslationOntoBindPose(const DirectX::XMMATRIX& bindPose, const DirectX::XMFLOAT3& animTranslation)
@@ -64,6 +65,7 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
     HRESULT hr;
 
     m_ctx.Init(device.Get(), context.Get(), renderer);
+	m_DX11Renderer = renderer;
     
     //-------------------- [[WEEK 5 6 - ANIMATION HIERARCHY INIT HERE]] --------------------
     //if (bool animInit = AnimationHierarchyInit() == E_FAIL) return E_FAIL;
@@ -982,7 +984,6 @@ void Scene::update(const float deltaTime)
         if (fox.foxAnimationIndex == 0)
         {
             //Fox circular run movement
-            static float foxAngle = 0.0f;
             DirectX::XMFLOAT3 foxCenter = { 0.0f, -0.5f, 0.0f + i }; //Y Matches FoxInit
 
             fox.speedTimer += fox.speedSign * deltaTime;
@@ -1001,11 +1002,11 @@ void Scene::update(const float deltaTime)
             fox.foxSpeed = fox.foxRunSpeedMax + (fox.foxRunSpeedMin - fox.foxRunSpeedMax) * fox.speedTimer;
 
             // Integrate angle
-            foxAngle += fox.foxSpeed * deltaTime;
+            fox.foxAngle += fox.foxSpeed * deltaTime;
 
             // Compute position on XZ circle
-            float cosA = DirectX::XMScalarCos(foxAngle);
-            float sinA = DirectX::XMScalarSin(foxAngle);
+            float cosA = DirectX::XMScalarCos(fox.foxAngle);
+            float sinA = DirectX::XMScalarSin(fox.foxAngle);
             DirectX::XMFLOAT3 foxPos = { foxCenter.x + fox.foxRunRadius * cosA,  foxCenter.y,  foxCenter.z + fox.foxRunRadius * sinA };
 
             // Tangent (direction of motion) for increasing angle: derivative of (cos, sin) -> (-sin, cos)
@@ -1034,7 +1035,6 @@ void Scene::update(const float deltaTime)
         //Fox walk movement
         else if (fox.foxAnimationIndex == 2)
         {
-            static float foxAngle = 0.0f;
             DirectX::XMFLOAT3 foxCenter = { 0.0f, -0.5f, 0.0f }; //Y Matches FoxInit
 
             fox.speedTimer += fox.speedSign * deltaTime;
@@ -1053,11 +1053,11 @@ void Scene::update(const float deltaTime)
             fox.foxSpeed = fox.foxWalkSpeedMax + (fox.foxWalkSpeedMin - fox.foxWalkSpeedMax) * fox.speedTimer;
 
             // Integrate angle
-            foxAngle += fox.foxSpeed * deltaTime;
+            fox.foxAngle += fox.foxSpeed * deltaTime;
 
             // Compute position on XZ circle
-            float cosA = DirectX::XMScalarCos(foxAngle);
-            float sinA = DirectX::XMScalarSin(foxAngle);
+            float cosA = DirectX::XMScalarCos(fox.foxAngle);
+            float sinA = DirectX::XMScalarSin(fox.foxAngle);
             DirectX::XMFLOAT3 foxPos = { foxCenter.x + fox.foxWalkRadius * cosA,  foxCenter.y,  foxCenter.z + fox.foxWalkRadius * sinA };
 
             // Tangent (direction of motion) for increasing angle: derivative of (cos, sin) -> (-sin, cos)
@@ -1082,8 +1082,9 @@ void Scene::update(const float deltaTime)
 
 #pragma endregion
 
-    m_sceneobject.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made 
-    m_sceneobject.RenderFrame(m_ctx, deltaTime); // renders the object
+    //Week 6
+    //m_sceneobject.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made 
+    //m_sceneobject.RenderFrame(m_ctx, deltaTime); // renders the object
 
     //Week 7.1
     for (SceneObject& obj : m_hierarchicalObjects)
@@ -1092,14 +1093,17 @@ void Scene::update(const float deltaTime)
         obj.m_HierarchicalObject.RenderFrame(m_ctx, deltaTime);
     }
 
-    //Week 7.2 Pole
-    m_sceneobjectSkinning.AnimateFrame(m_ctx);
-    m_sceneobjectSkinning.RenderFrame(m_ctx, deltaTime);
-
-    //Week 7.2 Foxes
-    for (Fox& fox : m_foxObjects)
+    if (!m_DX11Renderer->IsPBRMode())
     {
-        fox.m_foxSceneObject.AnimateFrame(m_ctx);
-        fox.m_foxSceneObject.RenderFrame(m_ctx, deltaTime);
+        //Week 7.2 Pole
+        m_sceneobjectSkinning.AnimateFrame(m_ctx);
+        m_sceneobjectSkinning.RenderFrame(m_ctx, deltaTime);
+
+        //Week 7.2 Foxes
+        for (Fox& fox : m_foxObjects)
+        {
+            fox.m_foxSceneObject.AnimateFrame(m_ctx);
+            fox.m_foxSceneObject.RenderFrame(m_ctx, deltaTime);
+        }
     }
 }

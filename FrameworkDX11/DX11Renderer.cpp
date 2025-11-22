@@ -495,6 +495,12 @@ void DX11Renderer::CentreMouseInWindow(HWND hWnd)
     // Move the cursor to the center of the screen
     SetCursorPos(center.x, center.y);
 }
+
+bool DX11Renderer::IsPBRMode()
+{
+    return PBR_MODE;
+}
+
 void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
 {
     // Start the Dear ImGui frame
@@ -605,47 +611,49 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
         ImGui::Spacing();
     }
 
-
     //----------------------------[[[[ Week 7.2 Fox Animation Control ]]]]----------------------------
-    ImGui::Separator();
-    ImGui::Begin("Fox Animation Clips", nullptr, ImGuiChildFlags_AlwaysAutoResize);
-
-    for(int i = 0; i < m_pScene->m_foxObjects.size(); i++)
+    if (PBR_MODE == false)
     {
-        ImGui::PushID(i);
-		auto& currentFox = m_pScene->m_foxObjects[i];
+        ImGui::Separator();
+        ImGui::Begin("Fox Animation Clips", nullptr, ImGuiChildFlags_AlwaysAutoResize);
 
-        std::string objectHeader = "Fox " + std::to_string(i);
-        if (ImGui::CollapsingHeader(objectHeader.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) 
+        for (int i = 0; i < m_pScene->m_foxObjects.size(); i++)
         {
-            ImGui::SliderInt("Animation Clip", &currentFox.foxAnimationIndex, 0, 2);
+            ImGui::PushID(i);
+            auto& currentFox = m_pScene->m_foxObjects[i];
+
+            std::string objectHeader = "Fox " + std::to_string(i);
+            if (ImGui::CollapsingHeader(objectHeader.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+            {
+                ImGui::SliderInt("Animation Clip", &currentFox.foxAnimationIndex, 0, 2);
+                ImGui::Spacing();
+
+                if (currentFox.foxAnimationIndex == 0)
+                {
+                    ImGui::Text("Run Animation");
+                    ImGui::SliderFloat("Run Radius", &currentFox.foxRunRadius, 3.0f, 6.0f);
+                    ImGui::SliderFloat("Run Speed Max", &currentFox.foxRunSpeedMax, XM_2PI / 8.0f, XM_2PI * 4.0f);
+                }
+                else if (currentFox.foxAnimationIndex == 1)
+                {
+                    ImGui::Text("Idle Animation");
+                }
+                else if (currentFox.foxAnimationIndex == 2)
+                {
+                    ImGui::Text("Walk Animation");
+                    ImGui::SliderFloat("Walk Radius", &currentFox.foxWalkRadius, 2.0f, 10.0f);
+                }
+            }
+
+            ImGui::Spacing();
+            ImGui::Spacing();
             ImGui::Spacing();
 
-            if (currentFox.foxAnimationIndex == 0)
-            {
-                ImGui::Text("Run Animation");
-                ImGui::SliderFloat("Run Radius", &currentFox.foxRunRadius, 3.0f, 6.0f);
-                ImGui::SliderFloat("Run Speed Max", &currentFox.foxRunSpeedMax, XM_2PI / 8.0f, XM_2PI * 4.0f);
-            }
-            else if (currentFox.foxAnimationIndex == 1)
-            {
-                ImGui::Text("Idle Animation");
-            }
-            else if (currentFox.foxAnimationIndex == 2)
-            {
-                ImGui::Text("Walk Animation");
-                ImGui::SliderFloat("Walk Radius", &currentFox.foxWalkRadius, 2.0f, 10.0f);
-            }
+            ImGui::PopID();
         }
 
-		ImGui::Spacing();
-        ImGui::Spacing();
-        ImGui::Spacing();
-
-        ImGui::PopID();
-	}
-
-    ImGui::End();
+        ImGui::End();
+    }
 }
 
 void DX11Renderer::completeIMGUIDraw()

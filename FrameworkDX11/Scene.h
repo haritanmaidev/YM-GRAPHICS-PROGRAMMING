@@ -50,6 +50,7 @@ public:
 	Microsoft::WRL::ComPtr <ID3D11Buffer>			m_pLightConstantBuffer;
 	Microsoft::WRL::ComPtr <ID3D11Buffer>			m_pCustomConstantBuffer;
 
+	DX11Renderer* m_DX11Renderer = nullptr;
 	LightPropertiesConstantBuffer m_lightProperties;
 	IRenderingContext m_ctx;
 	SceneGraph m_sceneobject;
@@ -124,6 +125,7 @@ public:
 
 		int foxAnimationIndex = 0;
 		int lastAnimIndex = -1;
+		float foxAngle = 0.0f; //Current angle of fox
 		float foxSpeed = 0.0f; //Current speed of fox
 
 		float foxRunRadius = 4.0f;

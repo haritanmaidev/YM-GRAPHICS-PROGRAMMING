@@ -45,6 +45,8 @@ public:
 
 	void input(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
+	bool IsPBRMode();
+
 private: // methods
 	HRESULT initDevice(HWND hwnd);
 	void    cleanupDevice();
