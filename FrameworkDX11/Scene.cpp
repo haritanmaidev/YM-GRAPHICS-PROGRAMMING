@@ -74,7 +74,7 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
 	SkeletonPoleInit(); 
     FoxInit();
 
-    m_pCamera = new Camera(XMFLOAT3(5, 0, 0), XMFLOAT3(-1, 0, 0), XMFLOAT3(0.0f, 1.0f, 0.0f), width, height); //Fox Cam
+    m_pCamera = new Camera(XMFLOAT3(8, 0, 2), XMFLOAT3(-1, 0, 0), XMFLOAT3(0.0f, 1.0f, 0.0f), width, height); //Fox Cam
     //m_pCamera = new Camera(XMFLOAT3(0, 0, -10), XMFLOAT3(0, 0, 1), XMFLOAT3(0.0f, 1.0f, 0.0f), width, height); //Pole PreSkin Cam
     //m_pCamera = new Camera(XMFLOAT3(0, 0, -6), XMFLOAT3(0, 0, 1), XMFLOAT3(0.0f, 1.0f, 0.0f), width, height); // RoboArm Cam
 
@@ -252,34 +252,6 @@ void Scene::SkeletonArmInit()
     DirectX::XMStoreFloat4x4(&handTransform, scale * translation);
     int handIndex = m_robotArmSkeleton.AddJoint(elbowIndex, handTransform);
 
-    //Initialize default animation values for each joint/node
-	int jointCount = m_robotArmSkeleton.GetBoneCount();
-	m_nodeAnimValues.resize(jointCount);
-    if (jointCount > 0) {
-        m_nodeAnimValues[0].startPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, 2.0f };
-        m_nodeAnimValues[0].endPos = DirectX::XMFLOAT3{ 0.0f, 2.0f, 2.0f };
-        m_nodeAnimValues[0].startRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
-        m_nodeAnimValues[0].endRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
-        m_nodeAnimValues[0].startAngle = 0.0f;
-        m_nodeAnimValues[0].endAngle = DirectX::XM_PIDIV2;
-    }
-    if (jointCount > 1) {
-        m_nodeAnimValues[1].startPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
-        m_nodeAnimValues[1].endPos = DirectX::XMFLOAT3{ 1.0f, 1.0f, 0.0f };
-        m_nodeAnimValues[1].startRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
-        m_nodeAnimValues[1].endRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
-        m_nodeAnimValues[1].startAngle = 0.0f;
-        m_nodeAnimValues[1].endAngle = DirectX::XM_PI;
-    }
-    if (jointCount > 2) {
-        m_nodeAnimValues[2].startPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
-        m_nodeAnimValues[2].endPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, -1.0f };
-        m_nodeAnimValues[2].startRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
-        m_nodeAnimValues[2].endRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
-        m_nodeAnimValues[2].startAngle = 0.0f;
-        m_nodeAnimValues[2].endAngle = 0.0f;
-    }
-
     //root nodes migh change as the vector is resized, so this must be done first
     for (int i = 0; i < m_robotArmSkeleton.GetBoneCount(); i++)
     {
@@ -296,25 +268,207 @@ void Scene::SkeletonArmInit()
     }
 
     //--- 3. Create the Animation for the Skeleton --
-    m_robotArmAnimations.push_back(CreateWaveAnimation());
+    m_robotArmAnimations.push_back(CreateRobotArmAnimationDefault("Default Animation 1"));
+    m_robotArmAnimations.push_back(CreateRobotArmAnimationTriangle("Triangle Animation 2"));
+    m_robotArmAnimations.push_back(CreateRobotArmAnimationSpin("Spin Animation 3"));
 }
 
-Animation Scene::CreateWaveAnimation() 
+Animation Scene::CreateRobotArmAnimationDefault(std::string name)
 {
-	//The anim node here combines animations for by storing all the animation samplers and channels at the same address/ adding them to the same animation clip
-	Animation animNode;
-	animNode.m_name = "WaveHand_Simple";
+    //Create animation clip instance to which values will be added
+    Animation fakeClip;
 
-    for (int i = 0; i < m_nodeAnimValues.size(); i++) 
-    {
-		NodeAnimationValues& currentNodeValues = m_nodeAnimValues[i];
-		CreateWaveAnimationSampler(i, &animNode, currentNodeValues.startPos, currentNodeValues.endPos, currentNodeValues.startRot, currentNodeValues.endRot, currentNodeValues.startAngle, currentNodeValues.endAngle);
+    //Make sure robot animations array has space for new clip
+    int prevAnimClipSize = m_robotArmAnimations.size();
+	m_robotArmAnimations.resize(prevAnimClipSize + 1);
+	int currentAnimClipIndex = m_robotArmAnimations.size() - 1;
+
+    //Make sure joint anim values array of the current animation clip has space for all the joints
+    int jointCount = m_robotArmSkeleton.GetBoneCount();
+    m_robotArmAnimations[currentAnimClipIndex].m_jointAnimValues.resize(jointCount);
+
+	//Set the name and joint anim values array of the new animation clip
+    fakeClip.m_name = name;
+    fakeClip.m_jointAnimValues = m_robotArmAnimations[currentAnimClipIndex].m_jointAnimValues;
+    
+    //Init default values for each joint
+    if (jointCount > 0) {
+        fakeClip.m_jointAnimValues[0].startPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, 2.0f };
+        fakeClip.m_jointAnimValues[0].endPos = DirectX::XMFLOAT3{ 0.0f, 2.0f, 2.0f };
+        fakeClip.m_jointAnimValues[0].startRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
+        fakeClip.m_jointAnimValues[0].endRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
+        fakeClip.m_jointAnimValues[0].startAngle = 0.0f;
+        fakeClip.m_jointAnimValues[0].endAngle = DirectX::XM_PIDIV2;
+    }
+    if (jointCount > 1) {
+        fakeClip.m_jointAnimValues[1].startPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+        fakeClip.m_jointAnimValues[1].endPos = DirectX::XMFLOAT3{ 1.0f, 1.0f, 0.0f };
+        fakeClip.m_jointAnimValues[1].startRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
+        fakeClip.m_jointAnimValues[1].endRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
+        fakeClip.m_jointAnimValues[1].startAngle = 0.0f;
+        fakeClip.m_jointAnimValues[1].endAngle = DirectX::XM_PI;
+    }
+    if (jointCount > 2) {
+        fakeClip.m_jointAnimValues[2].startPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+        fakeClip.m_jointAnimValues[2].endPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, -1.0f };
+        fakeClip.m_jointAnimValues[2].startRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
+        fakeClip.m_jointAnimValues[2].endRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
+        fakeClip.m_jointAnimValues[2].startAngle = 0.0f;
+        fakeClip.m_jointAnimValues[2].endAngle = 0.0f;
     }
 
-    return animNode;
+    Animation newAnim;
+    newAnim.m_name = name;
+	newAnim.m_jointAnimValues = fakeClip.m_jointAnimValues;
+
+	int currentJointCount = newAnim.m_jointAnimValues.size();
+    for (int i = 0; i < currentJointCount; i++) 
+    {
+		auto& currentJointValues = newAnim.m_jointAnimValues[i];
+
+		CreateAnimationSampler(i, &newAnim,
+            currentJointValues.startPos, currentJointValues.endPos,
+            currentJointValues.startRot, currentJointValues.endRot,
+            currentJointValues.startAngle, currentJointValues.endAngle);
+    }
+
+    //Resizing here since the default values above creates an extra empty clip
+    m_robotArmAnimations.resize(currentAnimClipIndex);
+
+    return newAnim;
 }
 
-void Scene::CreateWaveAnimationSampler(int nodeIndex, Animation* anim, const DirectX::XMFLOAT3& startP, const DirectX::XMFLOAT3& endP, const DirectX::XMFLOAT3& startR, const DirectX::XMFLOAT3& endR, float startAngle, float endAngle)
+Animation Scene::CreateRobotArmAnimationTriangle(std::string name) 
+{
+    //Create animation clip instance to which values will be added
+    Animation fakeClip;
+
+    //Make sure robot animations array has space for new clip
+    int prevAnimClipSize = m_robotArmAnimations.size();
+    m_robotArmAnimations.resize(prevAnimClipSize + 1);
+    int currentAnimClipIndex = m_robotArmAnimations.size() - 1;
+
+    //Make sure joint anim values array of the current animation clip has space for all the joints
+    int jointCount = m_robotArmSkeleton.GetBoneCount();
+    m_robotArmAnimations[currentAnimClipIndex].m_jointAnimValues.resize(jointCount);
+
+    //Set the name and joint anim values array of the new animation clip
+    fakeClip.m_name = name;
+    fakeClip.m_jointAnimValues = m_robotArmAnimations[currentAnimClipIndex].m_jointAnimValues;
+
+    //Init default values for each joint
+    if (jointCount > 0) {
+        fakeClip.m_jointAnimValues[0].startPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, 2.0f };
+        fakeClip.m_jointAnimValues[0].endPos = DirectX::XMFLOAT3{ 0.0f, 1.0f, 2.0f };
+        fakeClip.m_jointAnimValues[0].startRot = DirectX::XMFLOAT3{ 1.0f, 0.0f, 0.0f };
+        fakeClip.m_jointAnimValues[0].endRot = DirectX::XMFLOAT3{ 1.0f, 0.0f, 0.0f };
+        fakeClip.m_jointAnimValues[0].startAngle = 5.0f;
+        fakeClip.m_jointAnimValues[0].endAngle = 160.0f;
+    }
+    if (jointCount > 1) {
+        fakeClip.m_jointAnimValues[1].startPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, 4.0f };
+        fakeClip.m_jointAnimValues[1].endPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, 3.5f };
+        fakeClip.m_jointAnimValues[1].startRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
+        fakeClip.m_jointAnimValues[1].endRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
+        fakeClip.m_jointAnimValues[1].startAngle = -17.0f;
+        fakeClip.m_jointAnimValues[1].endAngle = 58.0f;
+    }
+    if (jointCount > 2) {
+        fakeClip.m_jointAnimValues[2].startPos = DirectX::XMFLOAT3{ 1.5f, -2.0f, -6.0f };
+        fakeClip.m_jointAnimValues[2].endPos = DirectX::XMFLOAT3{ 1.5f, -2.0f, -6.0f };
+        fakeClip.m_jointAnimValues[2].startRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
+        fakeClip.m_jointAnimValues[2].endRot = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
+        fakeClip.m_jointAnimValues[2].startAngle = 0.0f;
+        fakeClip.m_jointAnimValues[2].endAngle = DirectX::XM_PI;
+    }
+
+    Animation newAnim;
+    newAnim.m_name = name;
+    newAnim.m_jointAnimValues = fakeClip.m_jointAnimValues;
+
+    int currentJointCount = newAnim.m_jointAnimValues.size();
+    for (int i = 0; i < currentJointCount; i++)
+    {
+        auto& currentJointValues = newAnim.m_jointAnimValues[i];
+
+        CreateAnimationSampler(i, &newAnim,
+            currentJointValues.startPos, currentJointValues.endPos,
+            currentJointValues.startRot, currentJointValues.endRot,
+            currentJointValues.startAngle, currentJointValues.endAngle);
+    }
+
+    //Resizing here since the default values above creates 
+    m_robotArmAnimations.resize(currentAnimClipIndex);
+
+    return newAnim;
+}
+
+Animation Scene::CreateRobotArmAnimationSpin(std::string name)
+{
+    //Create animation clip instance to which values will be added
+    Animation fakeClip;
+
+    //Make sure robot animations array has space for new clip
+    int prevAnimClipSize = m_robotArmAnimations.size();
+    m_robotArmAnimations.resize(prevAnimClipSize + 1);
+    int currentAnimClipIndex = m_robotArmAnimations.size() - 1;
+
+    //Make sure joint anim values array of the current animation clip has space for all the joints
+    int jointCount = m_robotArmSkeleton.GetBoneCount();
+    m_robotArmAnimations[currentAnimClipIndex].m_jointAnimValues.resize(jointCount);
+
+    //Set the name and joint anim values array of the new animation clip
+    fakeClip.m_name = name;
+    fakeClip.m_jointAnimValues = m_robotArmAnimations[currentAnimClipIndex].m_jointAnimValues;
+
+    //Init default values for each joint
+    if (jointCount > 0) {
+        fakeClip.m_jointAnimValues[0].startPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, 2.0f };
+        fakeClip.m_jointAnimValues[0].endPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, 2.0f };
+        fakeClip.m_jointAnimValues[0].startRot = DirectX::XMFLOAT3{ 0.0f,1.0f, 0.0f };
+        fakeClip.m_jointAnimValues[0].endRot = DirectX::XMFLOAT3{ 0.0f, 1.0f, 0.0f };
+        fakeClip.m_jointAnimValues[0].startAngle = 0.0f;
+        fakeClip.m_jointAnimValues[0].endAngle = DirectX::XM_PI;
+    }
+    if (jointCount > 1) {
+        fakeClip.m_jointAnimValues[1].startPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+        fakeClip.m_jointAnimValues[1].endPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+        fakeClip.m_jointAnimValues[1].startRot = DirectX::XMFLOAT3{ 0.0f, 1.0f, 0.0f };
+        fakeClip.m_jointAnimValues[1].endRot = DirectX::XMFLOAT3{ 0.0f, 1.0f, 0.0f };
+        fakeClip.m_jointAnimValues[1].startAngle = 0.0f;
+        fakeClip.m_jointAnimValues[1].endAngle = DirectX::XM_PI;
+    }
+    if (jointCount > 2) {
+        fakeClip.m_jointAnimValues[2].startPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+        fakeClip.m_jointAnimValues[2].endPos = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+        fakeClip.m_jointAnimValues[2].startRot = DirectX::XMFLOAT3{ 0.0f, 1.0f, 0.0f };
+        fakeClip.m_jointAnimValues[2].endRot = DirectX::XMFLOAT3{ 0.0f, 1.0f, 0.0f };
+        fakeClip.m_jointAnimValues[2].startAngle = 0.0f;
+        fakeClip.m_jointAnimValues[2].endAngle = DirectX::XM_PI;
+    }
+
+    Animation newAnim;
+    newAnim.m_name = name;
+    newAnim.m_jointAnimValues = fakeClip.m_jointAnimValues;
+
+    int currentJointCount = newAnim.m_jointAnimValues.size();
+    for (int i = 0; i < currentJointCount; i++)
+    {
+        auto& currentJointValues = newAnim.m_jointAnimValues[i];
+
+        CreateAnimationSampler(i, &newAnim,
+            currentJointValues.startPos, currentJointValues.endPos,
+            currentJointValues.startRot, currentJointValues.endRot,
+            currentJointValues.startAngle, currentJointValues.endAngle);
+    }
+
+    //Resizing here since the default values above creates an extra empty clip
+    m_robotArmAnimations.resize(currentAnimClipIndex);
+
+    return newAnim;
+}
+
+void Scene::CreateAnimationSampler(int nodeIndex, Animation* anim, const DirectX::XMFLOAT3& startP, const DirectX::XMFLOAT3& endP, const DirectX::XMFLOAT3& startR, const DirectX::XMFLOAT3& endR, float startAngle, float endAngle)
 {
     // Samplers for the hand's translation and rotation.
     AnimationSampler nodeTranslationSampler, nodeRotationSampler;
@@ -359,6 +513,30 @@ void Scene::CreateWaveAnimationSampler(int nodeIndex, Animation* anim, const Dir
     rotChannel.samplerIndex = nodeRotationSamplerIndex;
     rotChannel.jointIndex = nodeIndex;
     anim->m_channels.push_back(rotChannel);
+}
+
+Animation Scene::CreateRobotArmAnimationFromExisting(int index)
+{
+    Animation newAnim;
+	newAnim.m_name = m_robotArmAnimations[index].m_name;
+	newAnim.m_jointAnimValues = m_robotArmAnimations[index].m_jointAnimValues;
+
+	int jointCount = newAnim.m_jointAnimValues.size();
+
+	newAnim.m_samplers.clear();
+	newAnim.m_channels.clear();
+	//newAnim.m_samplers.reserve(jointCount * 2);
+
+    for (int i = 0; i < jointCount; i++)
+    {
+		auto& currentJointValues = m_robotArmAnimations[index].m_jointAnimValues[i];
+
+        CreateAnimationSampler(i, &newAnim,
+            currentJointValues.startPos, currentJointValues.endPos,
+            currentJointValues.startRot, currentJointValues.endRot,
+            currentJointValues.startAngle, currentJointValues.endAngle);
+    }
+	return newAnim;
 }
 
 //-------------------- ===[[[[WEEK 7.2 Pole & Fox Definitions here]]]]=== --------------------

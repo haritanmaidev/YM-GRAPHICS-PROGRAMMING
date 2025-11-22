@@ -26,6 +26,16 @@ struct AnimationChannel
     int samplerIndex;     // The index of the sampler to use for keyframe data.
 };
 
+struct JointAnimationValues
+{
+    DirectX::XMFLOAT3 startPos = { 0.0f, 0.0f, 0.0f };
+    DirectX::XMFLOAT3 endPos = { 0.0f, 0.0f, 0.0f };
+    DirectX::XMFLOAT3 startRot = { 0.0f, 0.0f, 0.0f };
+    DirectX::XMFLOAT3 endRot = { 0.0f, 0.0f, 0.0f };
+    float startAngle = 0.0f;
+    float endAngle = DirectX::XM_PIDIV2;
+};
+
 // The main container for a single animation clip.
 class Animation
 {
@@ -34,10 +44,13 @@ public:
     // Copy Constructor
     Animation(const Animation& other)
         : m_samplers(other.m_samplers), // This will call std::vector's copy constructor
-        m_channels(other.m_channels), // This will call std::vector's copy constructor
-        m_name(other.m_name)          // This will call std::string's copy constructor
+        m_channels(other.m_channels),   // This will call std::vector's copy constructor
+        m_name(other.m_name),           // This will call std::string's copy constructor
+		m_jointAnimValues(other.m_jointAnimValues) // This will call std::vector's copy constructor
     {
     }
+
+    std::vector<JointAnimationValues> m_jointAnimValues;
 
     // Loads the first animation from the glTF model.
     bool LoadFromGltf(const tinygltf::Model& model, const std::map<int, int>& nodeToJointMap, const unsigned int animationIndex);

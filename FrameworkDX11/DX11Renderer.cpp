@@ -509,14 +509,13 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
     ImGui::SetWindowFontScale(1.0f);
     ImGui::Spacing();
 
-
 	//----------------------------[[[[ Week 7.1 Robot Arm Component ]]]]----------------------------
-	int animCount = m_pScene->m_robotArmAnimations.size();
+	int animClipCount = m_pScene->m_robotArmAnimations.size();
     static int currentAnimIndex = 0;
 
     //Store name of animations for Imgui Combo
     std::vector<const char*> animNames;
-    for (int i = 0; i < animCount; ++i)
+    for (int i = 0; i < animClipCount; ++i)
     {
         animNames.push_back(m_pScene->m_robotArmAnimations[i].m_name.c_str());
     }
@@ -533,7 +532,7 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
     }
 
 	//Selecting and playing different animations from combo box
-    if (ImGui::Combo("Robot Arm Animations", &currentAnimIndex, animNames.data(), animCount))
+    if (ImGui::Combo("Animation Clips", &currentAnimIndex, animNames.data(), animClipCount))
     {
         m_pScene->m_robotArmSkeleton.PlayAnimation(&m_pScene->m_robotArmAnimations[currentAnimIndex]);
     }
@@ -542,7 +541,9 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
 
     // Controlling the current animation at any level in hierarchy
     static bool animChanged = false;
-    int nodeCount = m_pScene->m_nodeAnimValues.size();
+    int nodeCount = m_pScene->m_robotArmAnimations[currentAnimIndex].m_jointAnimValues.size();
+
+	//Loop through each joint/node in robot arm and apply the new values to JointAnimValues of the current animation clip
     for (int i = 0; i < nodeCount; ++i)
     {
         ImGui::PushID(i);
@@ -550,10 +551,12 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
 
         if (ImGui::CollapsingHeader(header.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
         {
-            if (ImGui::InputFloat3("Start Position", &m_pScene->m_nodeAnimValues[i].startPos.x))  animChanged = true;
-            if (ImGui::InputFloat3("End Position", &m_pScene->m_nodeAnimValues[i].endPos.x)) animChanged = true;
-            if (ImGui::SliderAngle("Start Rotation", &m_pScene->m_nodeAnimValues[i].startAngle)) animChanged = true;
-            if (ImGui::SliderAngle("End Rotation", &m_pScene->m_nodeAnimValues[i].endAngle)) animChanged = true;
+            if (ImGui::InputFloat3("Start Position", &m_pScene->m_robotArmAnimations[currentAnimIndex].m_jointAnimValues[i].startPos.x))  animChanged = true;
+            if (ImGui::InputFloat3("End Position", &m_pScene->m_robotArmAnimations[currentAnimIndex].m_jointAnimValues[i].endPos.x)) animChanged = true;
+			if (ImGui::InputFloat3("Start Rotation", &m_pScene->m_robotArmAnimations[currentAnimIndex].m_jointAnimValues[i].startRot.x)) animChanged = true;
+			if (ImGui::InputFloat3("End Rotation", &m_pScene->m_robotArmAnimations[currentAnimIndex].m_jointAnimValues[i].endRot.x)) animChanged = true;
+            if (ImGui::SliderAngle("Start Angle", &m_pScene->m_robotArmAnimations[currentAnimIndex].m_jointAnimValues[i].startAngle)) animChanged = true;
+            if (ImGui::SliderAngle("End Angle", &m_pScene->m_robotArmAnimations[currentAnimIndex].m_jointAnimValues[i].endAngle)) animChanged = true;
         }
 
         ImGui::PopID();
@@ -561,14 +564,18 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
 
     if (animChanged)
     {
-        Animation newAnim = m_pScene->CreateWaveAnimation();
+        Animation newAnim = m_pScene->CreateRobotArmAnimationFromExisting(currentAnimIndex);
 
+        // If the vector was empty for some reason, ensure there is at least one element
         if (m_pScene->m_robotArmAnimations.empty())
         {
             m_pScene->m_robotArmAnimations.push_back(newAnim);
         }
+        else 
+        {
+			m_pScene->m_robotArmAnimations[currentAnimIndex] = (newAnim);
+        }
 
-        m_pScene->m_robotArmAnimations[0] = newAnim;
         animChanged = false;
     }
 

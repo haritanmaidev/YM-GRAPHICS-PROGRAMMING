@@ -86,24 +86,16 @@ public:
 	//------------------------ [[START OF WEEK 7.1 - SKELETON STUFF SECTION]] ------------------------
 	//Week 7.1 Custom Skeleton Arm Init Function
 	void SkeletonArmInit(); 
-	Animation CreateWaveAnimation();
-	void CreateWaveAnimationSampler(int nodeIndex, Animation* anim, const DirectX::XMFLOAT3& startP,const DirectX::XMFLOAT3& endP, const DirectX::XMFLOAT3& startR, const DirectX::XMFLOAT3& endR,float startAngle, float endAngle);
+	Animation CreateRobotArmAnimationDefault(std::string name);
+	Animation CreateRobotArmAnimationTriangle(std::string name);
+	Animation CreateRobotArmAnimationSpin(std::string name);
+
+	void CreateAnimationSampler(int nodeIndex, Animation* anim, const DirectX::XMFLOAT3& startP,const DirectX::XMFLOAT3& endP, const DirectX::XMFLOAT3& startR, const DirectX::XMFLOAT3& endR,float startAngle, float endAngle);
+	Animation CreateRobotArmAnimationFromExisting(int index);
 
 	Skeleton m_robotArmSkeleton;
 	std::vector<SceneNode*> m_armSegmentNodes;
 	std::vector<Animation> m_robotArmAnimations;
-
-	struct NodeAnimationValues
-	{
-		DirectX::XMFLOAT3 startPos = { 0.0f, 0.0f, 0.0f };
-		DirectX::XMFLOAT3 endPos = { 0.0f, 0.0f, 0.0f };
-		DirectX::XMFLOAT3 startRot = { 0.0f, 0.0f, 0.0f };
-		DirectX::XMFLOAT3 endRot = { 0.0f, 0.0f, 0.0f };
-		float startAngle = 0.0f;
-		float endAngle = DirectX::XM_PIDIV2;
-	};
-
-	std::vector<NodeAnimationValues> m_nodeAnimValues;
 
 	//Week 7.2 Custom Skeleton Pole & Fox
 	void SkeletonPoleInit(); 
