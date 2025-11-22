@@ -495,7 +495,6 @@ void DX11Renderer::CentreMouseInWindow(HWND hWnd)
     // Move the cursor to the center of the screen
     SetCursorPos(center.x, center.y);
 }
-
 void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
 {
     // Start the Dear ImGui frame
@@ -509,105 +508,102 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
     ImGui::SetWindowFontScale(1.0f);
     ImGui::Spacing();
 
-	//----------------------------[[[[ Week 7.1 Robot Arm Component ]]]]----------------------------
-	int animClipCount = m_pScene->m_robotArmAnimations.size();
-    static int currentAnimIndex = 0;
-
-    //Store name of animations for Imgui Combo
-    std::vector<const char*> animNames;
-    for (int i = 0; i < animClipCount; ++i)
+    //----------------------------[[[[ Week 7.1 Robot Arm Component ]]]]----------------------------
+    for (int objIndex = 0; objIndex < m_pScene->m_hierarchicalObjects.size(); objIndex++)
     {
-        animNames.push_back(m_pScene->m_robotArmAnimations[i].m_name.c_str());
-    }
+        auto& currentObj = m_pScene->m_hierarchicalObjects[objIndex];
 
-    //Replay and Pause buttons
-    if (ImGui::Button("Play From Start"))
-    {
-        m_pScene->m_robotArmSkeleton.PlayAnimation(&m_pScene->m_robotArmAnimations[currentAnimIndex]);
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Pause/Play"))
-    {
-        m_pScene->m_robotArmSkeleton.m_isPaused = !m_pScene->m_robotArmSkeleton.m_isPaused;
-    }
+        // Ensure we have consistent state even if no animations exist
+        int animClipCount = static_cast<int>(currentObj.m_robotArmAnimations.size());
+        if (animClipCount == 0)
+            continue;
 
-	//Selecting and playing different animations from combo box
-    if (ImGui::Combo("Animation Clips", &currentAnimIndex, animNames.data(), animClipCount))
-    {
-        m_pScene->m_robotArmSkeleton.PlayAnimation(&m_pScene->m_robotArmAnimations[currentAnimIndex]);
-    }
+        // Make all widgets for this object use a unique ID scope so repeated labels don't collide.
+        ImGui::PushID(objIndex);
 
-    ImGui::Separator();
-
-    // Controlling the current animation at any level in hierarchy
-    static bool animChanged = false;
-    int nodeCount = m_pScene->m_robotArmAnimations[currentAnimIndex].m_jointAnimValues.size();
-
-	//Loop through each joint/node in robot arm and apply the new values to JointAnimValues of the current animation clip
-    for (int i = 0; i < nodeCount; ++i)
-    {
-        ImGui::PushID(i);
-        std::string header = "Node " + std::to_string(i);
-
-        if (ImGui::CollapsingHeader(header.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+        // Optional: show the object as a collapsing header so each object has its own tree
+        std::string objectHeader = "Object " + std::to_string(objIndex);
+        if (ImGui::CollapsingHeader(objectHeader.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
         {
-            if (ImGui::InputFloat3("Start Position", &m_pScene->m_robotArmAnimations[currentAnimIndex].m_jointAnimValues[i].startPos.x))  animChanged = true;
-            if (ImGui::InputFloat3("End Position", &m_pScene->m_robotArmAnimations[currentAnimIndex].m_jointAnimValues[i].endPos.x)) animChanged = true;
-			if (ImGui::InputFloat3("Start Rotation", &m_pScene->m_robotArmAnimations[currentAnimIndex].m_jointAnimValues[i].startRot.x)) animChanged = true;
-			if (ImGui::InputFloat3("End Rotation", &m_pScene->m_robotArmAnimations[currentAnimIndex].m_jointAnimValues[i].endRot.x)) animChanged = true;
-            if (ImGui::SliderAngle("Start Angle", &m_pScene->m_robotArmAnimations[currentAnimIndex].m_jointAnimValues[i].startAngle)) animChanged = true;
-            if (ImGui::SliderAngle("End Angle", &m_pScene->m_robotArmAnimations[currentAnimIndex].m_jointAnimValues[i].endAngle)) animChanged = true;
+            // Store name of animations for ImGui Combo
+            std::vector<const char*> animNames;
+            animNames.reserve(animClipCount);
+            for (int j = 0; j < animClipCount; ++j)
+            {
+                animNames.push_back(currentObj.m_robotArmAnimations[j].m_name.c_str());
+            }
+
+            // Replay and Pause buttons (operate on this object's skeleton)
+            if (ImGui::Button("Play From Start"))
+            {
+                // Clamp index just in case
+                int idx = currentObj.currentAnimIndex;
+                currentObj.m_robotArmSkeleton.PlayAnimation(&currentObj.m_robotArmAnimations[idx]);
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Pause/Play"))
+            {
+                currentObj.m_robotArmSkeleton.m_isPaused = !currentObj.m_robotArmSkeleton.m_isPaused;
+            }
+
+            // Selecting and playing different animations from combo box
+            if (ImGui::Combo("Animation Clips", &currentObj.currentAnimIndex, animNames.data(), animClipCount))
+            {
+                // Play the newly selected animation immediately
+                int idx = currentObj.currentAnimIndex;
+                currentObj.m_robotArmSkeleton.PlayAnimation(&currentObj.m_robotArmAnimations[idx]);
+            }
+
+            ImGui::Separator();
+
+            // Controlling the current animation at any level in hierarchy
+            bool animChanged = false;
+            int currentAnimIndex = currentObj.currentAnimIndex;
+            int nodeCount = static_cast<int>(currentObj.m_robotArmAnimations[currentAnimIndex].m_jointAnimValues.size());
+
+            // Loop through each joint/node in robot arm and apply the new values to JointAnimValues of the current animation clip
+            for (int jointIndex = 0; jointIndex < nodeCount; ++jointIndex)
+            {
+                ImGui::PushID(jointIndex); // ensure uniqueness for each joint widget within this object
+                std::string header = "Node " + std::to_string(jointIndex);
+
+                if (ImGui::CollapsingHeader(header.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+                {
+                    auto& jointVals = currentObj.m_robotArmAnimations[currentAnimIndex].m_jointAnimValues[jointIndex];
+
+                    if (ImGui::InputFloat3("Start Position", &jointVals.startPos.x))  animChanged = true;
+                    if (ImGui::InputFloat3("End Position", &jointVals.endPos.x)) animChanged = true;
+                    if (ImGui::InputFloat3("Start Rotation", &jointVals.startRot.x)) animChanged = true;
+                    if (ImGui::InputFloat3("End Rotation", &jointVals.endRot.x)) animChanged = true;
+                    if (ImGui::SliderAngle("Start Angle", &jointVals.startAngle)) 
+                        animChanged = true;
+                    if (ImGui::SliderAngle("End Angle", &jointVals.endAngle)) animChanged = true;
+                }
+
+                ImGui::PopID();
+            }
+
+            if (animChanged)
+            {
+                // Rebuild samplers/channels from edited joint values and replace the selected animation clip
+                Animation newAnim = m_pScene->CreateRobotArmAnimationFromExisting(currentObj, currentAnimIndex);
+
+                // Replace the animation clip safely
+                if (currentObj.m_robotArmAnimations.empty())
+                {
+                    currentObj.m_robotArmAnimations.push_back(newAnim);
+                }
+                else
+                {
+                    currentObj.m_robotArmAnimations[currentAnimIndex] = newAnim;
+                }
+
+				animChanged = false;
+            }
         }
 
-        ImGui::PopID();
+        ImGui::PopID(); // pop object scope
     }
-
-    if (animChanged)
-    {
-        Animation newAnim = m_pScene->CreateRobotArmAnimationFromExisting(currentAnimIndex);
-
-        // If the vector was empty for some reason, ensure there is at least one element
-        if (m_pScene->m_robotArmAnimations.empty())
-        {
-            m_pScene->m_robotArmAnimations.push_back(newAnim);
-        }
-        else 
-        {
-			m_pScene->m_robotArmAnimations[currentAnimIndex] = (newAnim);
-        }
-
-        animChanged = false;
-    }
-
-    //Week 6 Imgui
-//if (ImGui::TreeNode("Tree Nodes"))
-//{
-//    // See see "Examples -> Property Editor" (ShowExampleAppPropertyEditor() function) for a fancier, data-driven tree.
-//    if (ImGui::TreeNode("Basic trees"))
-//    {
-//        for (int i = 0; i < 5; i++)
-//        {
-//            // Use SetNextItemOpen() so set the default state of a node to be open. We could
-//            // also use TreeNodeEx() with the ImGuiTreeNodeFlags_DefaultOpen flag to achieve the same thing!
-//            if (i == 0)
-//                ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-
-//            // Here we use PushID() to generate a unique base ID, and then the "" used as TreeNode id won't conflict.
-//            // An alternative to using 'PushID() + TreeNode("", ...)' to generate a unique ID is to use 'TreeNode((void*)(intptr_t)i, ...)',
-//            // aka generate a dummy pointer-sized value to be hashed. The demo below uses that technique. Both are fine.
-//            ImGui::PushID(i);
-//            if (ImGui::TreeNode("", "Child %d", i))
-//            {
-//                ImGui::Text("blah blah");
-//                ImGui::SameLine();
-//                if (ImGui::SmallButton("button")) {}
-//                ImGui::TreePop();
-//            }
-//            ImGui::PopID();
-//        }
-//        ImGui::TreePop();
-//    }
-//}
 
     // example usage
     /*if (ImGui::RadioButton("Single threaded CPU", g_ttype == use_cpu_singlethread)) g_ttype = use_cpu_singlethread;
@@ -618,7 +614,6 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
 
     ImGui::SliderInt("Number of Cubes", &g_cube_count, 2, max_number_of_boxes);*/
 }
-
 void DX11Renderer::completeIMGUIDraw()
 {
     ImGui::Render();

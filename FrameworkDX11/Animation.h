@@ -26,12 +26,13 @@ struct AnimationChannel
     int samplerIndex;     // The index of the sampler to use for keyframe data.
 };
 
+//Week 7.1 Hierarchical Animation Values
 struct JointAnimationValues
 {
     DirectX::XMFLOAT3 startPos = { 0.0f, 0.0f, 0.0f };
     DirectX::XMFLOAT3 endPos = { 0.0f, 0.0f, 0.0f };
-    DirectX::XMFLOAT3 startRot = { 0.0f, 0.0f, 0.0f };
-    DirectX::XMFLOAT3 endRot = { 0.0f, 0.0f, 0.0f };
+    DirectX::XMFLOAT3 startRot = { 0.0f, 0.0f, 1.0f };
+    DirectX::XMFLOAT3 endRot = { 0.0f, 0.0f, 1.0f };
     float startAngle = 0.0f;
     float endAngle = DirectX::XM_PIDIV2;
 };

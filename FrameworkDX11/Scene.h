@@ -84,23 +84,29 @@ public:
 	float animationTimer = 0.0f;
 
 	//------------------------ [[START OF WEEK 7.1 - SKELETON STUFF SECTION]] ------------------------
-	//Week 7.1 Custom Skeleton Arm Init Function
-	void SkeletonArmInit(); 
-	Animation CreateRobotArmAnimationDefault(std::string name);
-	Animation CreateRobotArmAnimationTriangle(std::string name);
-	Animation CreateRobotArmAnimationSpin(std::string name);
-
-	void CreateAnimationSampler(int nodeIndex, Animation* anim, const DirectX::XMFLOAT3& startP,const DirectX::XMFLOAT3& endP, const DirectX::XMFLOAT3& startR, const DirectX::XMFLOAT3& endR,float startAngle, float endAngle);
-	Animation CreateRobotArmAnimationFromExisting(int index);
-
-	Skeleton m_robotArmSkeleton;
-	std::vector<SceneNode*> m_armSegmentNodes;
-	std::vector<Animation> m_robotArmAnimations;
-
-	struct SceneObject 
+	//Made this sceneobject struct to hold these 3 variables
+	//Animation class holds a list of struct JointAnimValues, which holds values of each joint per different anim clip
+	struct SceneObject
 	{
+		Skeleton m_robotArmSkeleton;
+		std::vector<SceneNode*> m_armSegmentNodes;
+		std::vector<Animation> m_robotArmAnimations;
+		SceneGraph m_HierarchicalObject;
 
+		int currentAnimIndex = 0;
+		bool pendingApply = false;
 	};
+
+	std::vector<SceneObject> m_hierarchicalObjects;
+
+	//Week 7.1 Custom Skeleton Arm Init Function
+	void SkeletonArmInit(int sceneObjCount); 
+	Animation CreateRobotArmAnimationDefault(SceneObject& currentObject, std::string name);
+	Animation CreateRobotArmAnimationTriangle(SceneObject& currentObject, std::string name);
+	Animation CreateRobotArmAnimationSpin(SceneObject& currentObject, std::string name);
+	Animation CreateRobotArmAnimationFromExisting(SceneObject& currentObject, int index);
+	void CreateAnimationSampler(SceneObject& currentObject, int nodeIndex, Animation* anim, const DirectX::XMFLOAT3& startP,const DirectX::XMFLOAT3& endP, const DirectX::XMFLOAT3& startR, const DirectX::XMFLOAT3& endR,float startAngle, float endAngle);
+
 
 	//Week 7.2 Custom Skeleton Pole & Fox
 	void SkeletonPoleInit(); 

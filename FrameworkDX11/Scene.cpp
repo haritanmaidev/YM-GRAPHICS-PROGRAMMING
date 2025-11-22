@@ -68,7 +68,7 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
     //if (bool animInit = AnimationHierarchyInit() == E_FAIL) return E_FAIL;
 
     //-------------------- [[WEEK 7.1 - SKELETON ARM INIT HERE]] --------------------
-    SkeletonArmInit();
+    SkeletonArmInit(2);
 
     //-------------------- [[WEEK 7.2 - SIMPLERIG/POLE AND FOX INIT HERE]] --------------------
 	SkeletonPoleInit(); 
@@ -146,150 +146,157 @@ void Scene::setupLightProperties()
 HRESULT Scene::AnimationHierarchyInit()
 {
     //---------------------|||[[[[[ HIERARCHY CREATION START ]]]]]|||---------------------
-    //PARENT NODE INITIALIZATION
+//    //PARENT NODE INITIALIZATION
     SceneNode* sunNode = m_sceneobject.CreateRootNode();
     if (!sunNode) return E_FAIL;
-    sunNode->LoadSphere(m_ctx);
-    sunNode->AddTranslation({ 0.0, 0, 2.0 });
-    //Parent node: translation logic
-    AnimationChannel channel0translation;
-    AnimationSampler sampler0Translation;
-    sampler0Translation.vec3_values.push_back(m_startPosParent);// Setting position keyframes
-    sampler0Translation.vec3_values.push_back(m_endPosParent);
-    sampler0Translation.timestamps.push_back(0.0f);// Setting time keyframes for each keyframe
-    sampler0Translation.timestamps.push_back(2.0f);
-    m_AnimationClass.m_samplers.push_back(sampler0Translation);
-    m_AnimationClass.m_channels.push_back({ channel0translation.TRANSLATION, 0, 0 });
-    //Parent node: rotation logic
-    AnimationChannel channel1Rotation;
-    AnimationSampler sampler1Rotation;
-    DirectX::XMStoreFloat4(&m_startRotParent, DirectX::XMQuaternionIdentity());
-    DirectX::XMStoreFloat4(&m_endRotParent, DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), DirectX::XM_PI));
-    sampler1Rotation.vec4_values.push_back(m_startRotParent);//Rotation keyframes
-    sampler1Rotation.vec4_values.push_back(m_endRotParent);
-    sampler1Rotation.timestamps.push_back(0.0f); // Rotation timestamps of each keyframe
-    sampler1Rotation.timestamps.push_back(4.0f);
-    m_AnimationClass.m_samplers.push_back(sampler1Rotation);
-    m_AnimationClass.m_channels.push_back({ channel1Rotation.ROTATION, 0, 1 });
-
-#pragma region child 1
-    //CHILD NODE INITIALIZATION
-    SceneNode* planetOneNode = sunNode->CreateChildNode();
-    if (!planetOneNode) return E_FAIL;
-    if (!planetOneNode->LoadSphere(m_ctx));
-    planetOneNode->AddTranslation({ 0, 2.5, 0 });
-    //Child one node: translation logic
-    AnimationChannel channel2translation;
-    AnimationSampler sampler2Translation;
-    sampler2Translation.vec3_values.push_back(m_startPosChild1);
-    sampler2Translation.vec3_values.push_back({ m_endPosChild1 });
-    sampler2Translation.timestamps.push_back(0.0f);
-    sampler2Translation.timestamps.push_back(2.0f);
-    m_AnimationClass.m_samplers.push_back(sampler2Translation);
-    m_AnimationClass.m_channels.push_back({ channel2translation.TRANSLATION, 1, 2 });
-    //Child one node: rotation logic
-    AnimationChannel channel3Rotation;
-    AnimationSampler sampler3Rotation;
-    DirectX::XMStoreFloat4(&m_startRotChild1, DirectX::XMQuaternionIdentity());
-    DirectX::XMStoreFloat4(&m_endRotChild1, DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(1.0, 1.0f, 0.0f, 0.0f), 720));
-    sampler3Rotation.vec4_values.push_back({ m_startRotChild1 });
-    sampler3Rotation.vec4_values.push_back({ m_endRotChild1 });
-    sampler3Rotation.timestamps.push_back(0.0f);
-    sampler3Rotation.timestamps.push_back(4.0f);
-    m_AnimationClass.m_samplers.push_back(sampler3Rotation);
-    m_AnimationClass.m_channels.push_back({ channel3Rotation.ROTATION, 1, 3 });
-#pragma endregion
-
-#pragma region child 2
-    //CHILD 2 NODE INITIALIZATION
-    SceneNode* planetTwoNode = sunNode->CreateChildNode();
-    if (!planetTwoNode) return E_FAIL;
-    if (!planetTwoNode->LoadSphere(m_ctx));
-    planetTwoNode->AddTranslation({ 0, 2.5, 0 });
-    //Child two node: translation logic
-    AnimationChannel channel4translation;
-    AnimationSampler sampler4Translation;
-    sampler4Translation.vec3_values.push_back(m_startPosChild2);
-    sampler4Translation.vec3_values.push_back({ m_startPosChild2 });
-    sampler4Translation.timestamps.push_back(0.0f);
-    sampler4Translation.timestamps.push_back(2.0f);
-    m_AnimationClass.m_samplers.push_back(sampler4Translation);
-    m_AnimationClass.m_channels.push_back({ channel4translation.TRANSLATION, 2, 4 });
-    //Child two node: rotation logic
-    AnimationChannel channel5otation;
-    AnimationSampler sampler5Rotation;
-    DirectX::XMStoreFloat4(&m_startRotChild2, DirectX::XMQuaternionIdentity());
-    DirectX::XMStoreFloat4(&m_endRotChild2, DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(1.f, 0.0f, 0.0f, 0.0f),0));
-    sampler5Rotation.vec4_values.push_back({ m_startRotChild2 });
-    sampler5Rotation.vec4_values.push_back({ m_endRotChild2 });
-    sampler5Rotation.timestamps.push_back(0.0f);
-    sampler5Rotation.timestamps.push_back(2.0f);
-    m_AnimationClass.m_samplers.push_back(sampler5Rotation);
-    m_AnimationClass.m_channels.push_back({ channel5otation.ROTATION, 2, 5 });
+//    sunNode->LoadSphere(m_ctx);
+//    sunNode->AddTranslation({ 0.0, 0, 2.0 });
+//    //Parent node: translation logic
+//    AnimationChannel channel0translation;
+//    AnimationSampler sampler0Translation;
+//    sampler0Translation.vec3_values.push_back(m_startPosParent);// Setting position keyframes
+//    sampler0Translation.vec3_values.push_back(m_endPosParent);
+//    sampler0Translation.timestamps.push_back(0.0f);// Setting time keyframes for each keyframe
+//    sampler0Translation.timestamps.push_back(2.0f);
+//    m_AnimationClass.m_samplers.push_back(sampler0Translation);
+//    m_AnimationClass.m_channels.push_back({ channel0translation.TRANSLATION, 0, 0 });
+//    //Parent node: rotation logic
+//    AnimationChannel channel1Rotation;
+//    AnimationSampler sampler1Rotation;
+//    DirectX::XMStoreFloat4(&m_startRotParent, DirectX::XMQuaternionIdentity());
+//    DirectX::XMStoreFloat4(&m_endRotParent, DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), DirectX::XM_PI));
+//    sampler1Rotation.vec4_values.push_back(m_startRotParent);//Rotation keyframes
+//    sampler1Rotation.vec4_values.push_back(m_endRotParent);
+//    sampler1Rotation.timestamps.push_back(0.0f); // Rotation timestamps of each keyframe
+//    sampler1Rotation.timestamps.push_back(4.0f);
+//    m_AnimationClass.m_samplers.push_back(sampler1Rotation);
+//    m_AnimationClass.m_channels.push_back({ channel1Rotation.ROTATION, 0, 1 });
+//
+//#pragma region child 1
+//    //CHILD NODE INITIALIZATION
+//    SceneNode* planetOneNode = sunNode->CreateChildNode();
+//    if (!planetOneNode) return E_FAIL;
+//    if (!planetOneNode->LoadSphere(m_ctx));
+//    planetOneNode->AddTranslation({ 0, 2.5, 0 });
+//    //Child one node: translation logic
+//    AnimationChannel channel2translation;
+//    AnimationSampler sampler2Translation;
+//    sampler2Translation.vec3_values.push_back(m_startPosChild1);
+//    sampler2Translation.vec3_values.push_back({ m_endPosChild1 });
+//    sampler2Translation.timestamps.push_back(0.0f);
+//    sampler2Translation.timestamps.push_back(2.0f);
+//    m_AnimationClass.m_samplers.push_back(sampler2Translation);
+//    m_AnimationClass.m_channels.push_back({ channel2translation.TRANSLATION, 1, 2 });
+//    //Child one node: rotation logic
+//    AnimationChannel channel3Rotation;
+//    AnimationSampler sampler3Rotation;
+//    DirectX::XMStoreFloat4(&m_startRotChild1, DirectX::XMQuaternionIdentity());
+//    DirectX::XMStoreFloat4(&m_endRotChild1, DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(1.0, 1.0f, 0.0f, 0.0f), 720));
+//    sampler3Rotation.vec4_values.push_back({ m_startRotChild1 });
+//    sampler3Rotation.vec4_values.push_back({ m_endRotChild1 });
+//    sampler3Rotation.timestamps.push_back(0.0f);
+//    sampler3Rotation.timestamps.push_back(4.0f);
+//    m_AnimationClass.m_samplers.push_back(sampler3Rotation);
+//    m_AnimationClass.m_channels.push_back({ channel3Rotation.ROTATION, 1, 3 });
+//#pragma endregion
+//
+//#pragma region child 2
+//    //CHILD 2 NODE INITIALIZATION
+//    SceneNode* planetTwoNode = sunNode->CreateChildNode();
+//    if (!planetTwoNode) return E_FAIL;
+//    if (!planetTwoNode->LoadSphere(m_ctx));
+//    planetTwoNode->AddTranslation({ 0, 2.5, 0 });
+//    //Child two node: translation logic
+//    AnimationChannel channel4translation;
+//    AnimationSampler sampler4Translation;
+//    sampler4Translation.vec3_values.push_back(m_startPosChild2);
+//    sampler4Translation.vec3_values.push_back({ m_startPosChild2 });
+//    sampler4Translation.timestamps.push_back(0.0f);
+//    sampler4Translation.timestamps.push_back(2.0f);
+//    m_AnimationClass.m_samplers.push_back(sampler4Translation);
+//    m_AnimationClass.m_channels.push_back({ channel4translation.TRANSLATION, 2, 4 });
+//    //Child two node: rotation logic
+//    AnimationChannel channel5otation;
+//    AnimationSampler sampler5Rotation;
+//    DirectX::XMStoreFloat4(&m_startRotChild2, DirectX::XMQuaternionIdentity());
+//    DirectX::XMStoreFloat4(&m_endRotChild2, DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(1.f, 0.0f, 0.0f, 0.0f),0));
+//    sampler5Rotation.vec4_values.push_back({ m_startRotChild2 });
+//    sampler5Rotation.vec4_values.push_back({ m_endRotChild2 });
+//    sampler5Rotation.timestamps.push_back(0.0f);
+//    sampler5Rotation.timestamps.push_back(2.0f);
+//    m_AnimationClass.m_samplers.push_back(sampler5Rotation);
+//    m_AnimationClass.m_channels.push_back({ channel5otation.ROTATION, 2, 5 });
 #pragma endregion
     //---------------------|||[[[[[ HIERARCHY CREATION END ]]]]]|||---------------------
 }
 
 //-------------------- ===[[[[WEEK 7.1 Init & Anim Definitions here]]]]=== --------------------
-void Scene::SkeletonArmInit() 
-{
-    const float segmentLength = 2.0f;
+void Scene::SkeletonArmInit(int sceneObjCount)
+{  
+    m_hierarchicalObjects.resize(sceneObjCount);
 
-    //--- 1. Build the Skeleton Hierarchy ---
-    DirectX::XMFLOAT4X4 shoulderTransform;
-    DirectX::XMStoreFloat4x4(&shoulderTransform, DirectX::XMMatrixIdentity());
-    int shoulderIndex = m_robotArmSkeleton.AddJoint(-1, shoulderTransform);
-
-    //Scale the elbow and hand nodes in turn
-    DirectX::XMMATRIX scale = DirectX::XMMatrixScaling(0.75, 0.75, 0.75);
-    DirectX::XMFLOAT4X4 elbowTransform;
-    DirectX::XMStoreFloat4x4(&elbowTransform, scale * DirectX::XMMatrixTranslation(0.0f, segmentLength, 0.0f));
-    int elbowIndex = m_robotArmSkeleton.AddJoint(shoulderIndex, elbowTransform);
-
-    //Hand
-    DirectX::XMFLOAT4X4 handTransform;
-    DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0.0f, segmentLength, 0.0f);
-    DirectX::XMStoreFloat4x4(&handTransform, scale * translation);
-    int handIndex = m_robotArmSkeleton.AddJoint(elbowIndex, handTransform);
-
-    //root nodes migh change as the vector is resized, so this must be done first
-    for (int i = 0; i < m_robotArmSkeleton.GetBoneCount(); i++)
+    for (int i = 0; i < sceneObjCount; i++) 
     {
-        m_sceneobject.CreateRootNode();
-    }
+		SceneObject& currentObject = m_hierarchicalObjects[i];
 
-    //--- 2. Create the Visible Geometry for Each Joint ---
-    for (int i = 0; i < m_robotArmSkeleton.GetBoneCount(); i++)
-    {
-        SceneNode* segmentNode = m_sceneobject.GetRootNode(i);
-        segmentNode->LoadSphere(m_ctx);
-        //segmentNode->AddTranslation({ i * 3.0f, 0, 0 });
-        m_armSegmentNodes.push_back(segmentNode);
-    }
+        const float segmentLength = 2.0f;
 
-    //--- 3. Create the Animation for the Skeleton --
-    m_robotArmAnimations.push_back(CreateRobotArmAnimationDefault("Default Animation 1"));
-    m_robotArmAnimations.push_back(CreateRobotArmAnimationTriangle("Triangle Animation 2"));
-    m_robotArmAnimations.push_back(CreateRobotArmAnimationSpin("Spin Animation 3"));
+        //--- 1. Build the Skeleton Hierarchy ---
+        DirectX::XMFLOAT4X4 shoulderTransform;
+        DirectX::XMStoreFloat4x4(&shoulderTransform, DirectX::XMMatrixIdentity());
+        int shoulderIndex = currentObject.m_robotArmSkeleton.AddJoint(-1, shoulderTransform);
+
+        //Scale the elbow and hand nodes in turn
+        DirectX::XMMATRIX scale = DirectX::XMMatrixScaling(0.75, 0.75, 0.75);
+        DirectX::XMFLOAT4X4 elbowTransform;
+        DirectX::XMStoreFloat4x4(&elbowTransform, scale * DirectX::XMMatrixTranslation(0.0f, segmentLength, 0.0f));
+        int elbowIndex = currentObject.m_robotArmSkeleton.AddJoint(shoulderIndex, elbowTransform);
+
+        //Hand
+        DirectX::XMFLOAT4X4 handTransform;
+        DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0.0f, segmentLength, 0.0f);
+        DirectX::XMStoreFloat4x4(&handTransform, scale * translation);
+        int handIndex = currentObject.m_robotArmSkeleton.AddJoint(elbowIndex, handTransform);
+
+        //root nodes migh change as the vector is resized, so this must be done first
+        for (int i = 0; i < currentObject.m_robotArmSkeleton.GetBoneCount(); i++)
+        {
+            currentObject.m_HierarchicalObject.CreateRootNode();
+        }
+
+        //--- 2. Create the Visible Geometry for Each Joint ---
+        for (int i = 0; i < currentObject.m_robotArmSkeleton.GetBoneCount(); i++)
+        {
+            SceneNode* segmentNode = currentObject.m_HierarchicalObject.GetRootNode(i);
+            segmentNode->LoadSphere(m_ctx);
+            //segmentNode->AddTranslation({ i * 3.0f, 0, 0 });
+            currentObject.m_armSegmentNodes.push_back(segmentNode);
+        }
+
+        //--- 3. Create the Animation for the Skeleton --
+        currentObject.m_robotArmAnimations.push_back(CreateRobotArmAnimationDefault(currentObject, "Default Animation 1"));
+        currentObject.m_robotArmAnimations.push_back(CreateRobotArmAnimationTriangle(currentObject, "Triangle Animation 2"));
+        currentObject.m_robotArmAnimations.push_back(CreateRobotArmAnimationSpin(currentObject, "Spin Animation 3"));
+    }
 }
 
-Animation Scene::CreateRobotArmAnimationDefault(std::string name)
+Animation Scene::CreateRobotArmAnimationDefault(SceneObject& currentObject, std::string name)
 {
     //Create animation clip instance to which values will be added
     Animation fakeClip;
 
     //Make sure robot animations array has space for new clip
-    int prevAnimClipSize = m_robotArmAnimations.size();
-	m_robotArmAnimations.resize(prevAnimClipSize + 1);
-	int currentAnimClipIndex = m_robotArmAnimations.size() - 1;
+    int prevAnimClipSize = currentObject.m_robotArmAnimations.size();
+    currentObject.m_robotArmAnimations.resize(prevAnimClipSize + 1);
+	int currentAnimClipIndex = currentObject.m_robotArmAnimations.size() - 1;
 
     //Make sure joint anim values array of the current animation clip has space for all the joints
-    int jointCount = m_robotArmSkeleton.GetBoneCount();
-    m_robotArmAnimations[currentAnimClipIndex].m_jointAnimValues.resize(jointCount);
+    int jointCount = currentObject.m_robotArmSkeleton.GetBoneCount();
+    currentObject.m_robotArmAnimations[currentAnimClipIndex].m_jointAnimValues.resize(jointCount);
 
 	//Set the name and joint anim values array of the new animation clip
     fakeClip.m_name = name;
-    fakeClip.m_jointAnimValues = m_robotArmAnimations[currentAnimClipIndex].m_jointAnimValues;
+    fakeClip.m_jointAnimValues = currentObject.m_robotArmAnimations[currentAnimClipIndex].m_jointAnimValues;
     
     //Init default values for each joint
     if (jointCount > 0) {
@@ -326,35 +333,35 @@ Animation Scene::CreateRobotArmAnimationDefault(std::string name)
     {
 		auto& currentJointValues = newAnim.m_jointAnimValues[i];
 
-		CreateAnimationSampler(i, &newAnim,
+		CreateAnimationSampler(currentObject, i, &newAnim,
             currentJointValues.startPos, currentJointValues.endPos,
             currentJointValues.startRot, currentJointValues.endRot,
             currentJointValues.startAngle, currentJointValues.endAngle);
     }
 
     //Resizing here since the default values above creates an extra empty clip
-    m_robotArmAnimations.resize(currentAnimClipIndex);
+    currentObject.m_robotArmAnimations.resize(currentAnimClipIndex);
 
     return newAnim;
 }
 
-Animation Scene::CreateRobotArmAnimationTriangle(std::string name) 
+Animation Scene::CreateRobotArmAnimationTriangle(SceneObject& currentObject, std::string name)
 {
     //Create animation clip instance to which values will be added
     Animation fakeClip;
 
     //Make sure robot animations array has space for new clip
-    int prevAnimClipSize = m_robotArmAnimations.size();
-    m_robotArmAnimations.resize(prevAnimClipSize + 1);
-    int currentAnimClipIndex = m_robotArmAnimations.size() - 1;
+    int prevAnimClipSize = currentObject.m_robotArmAnimations.size();
+    currentObject.m_robotArmAnimations.resize(prevAnimClipSize + 1);
+    int currentAnimClipIndex = currentObject.m_robotArmAnimations.size() - 1;
 
     //Make sure joint anim values array of the current animation clip has space for all the joints
-    int jointCount = m_robotArmSkeleton.GetBoneCount();
-    m_robotArmAnimations[currentAnimClipIndex].m_jointAnimValues.resize(jointCount);
+    int jointCount = currentObject.m_robotArmSkeleton.GetBoneCount();
+    currentObject.m_robotArmAnimations[currentAnimClipIndex].m_jointAnimValues.resize(jointCount);
 
     //Set the name and joint anim values array of the new animation clip
     fakeClip.m_name = name;
-    fakeClip.m_jointAnimValues = m_robotArmAnimations[currentAnimClipIndex].m_jointAnimValues;
+    fakeClip.m_jointAnimValues = currentObject.m_robotArmAnimations[currentAnimClipIndex].m_jointAnimValues;
 
     //Init default values for each joint
     if (jointCount > 0) {
@@ -391,35 +398,35 @@ Animation Scene::CreateRobotArmAnimationTriangle(std::string name)
     {
         auto& currentJointValues = newAnim.m_jointAnimValues[i];
 
-        CreateAnimationSampler(i, &newAnim,
+        CreateAnimationSampler(currentObject, i, &newAnim,
             currentJointValues.startPos, currentJointValues.endPos,
             currentJointValues.startRot, currentJointValues.endRot,
             currentJointValues.startAngle, currentJointValues.endAngle);
     }
 
     //Resizing here since the default values above creates 
-    m_robotArmAnimations.resize(currentAnimClipIndex);
+    currentObject.m_robotArmAnimations.resize(currentAnimClipIndex);
 
     return newAnim;
 }
 
-Animation Scene::CreateRobotArmAnimationSpin(std::string name)
+Animation Scene::CreateRobotArmAnimationSpin(SceneObject& currentObject, std::string name)
 {
     //Create animation clip instance to which values will be added
     Animation fakeClip;
 
     //Make sure robot animations array has space for new clip
-    int prevAnimClipSize = m_robotArmAnimations.size();
-    m_robotArmAnimations.resize(prevAnimClipSize + 1);
-    int currentAnimClipIndex = m_robotArmAnimations.size() - 1;
+    int prevAnimClipSize = currentObject.m_robotArmAnimations.size();
+    currentObject.m_robotArmAnimations.resize(prevAnimClipSize + 1);
+    int currentAnimClipIndex = currentObject.m_robotArmAnimations.size() - 1;
 
     //Make sure joint anim values array of the current animation clip has space for all the joints
-    int jointCount = m_robotArmSkeleton.GetBoneCount();
-    m_robotArmAnimations[currentAnimClipIndex].m_jointAnimValues.resize(jointCount);
+    int jointCount = currentObject.m_robotArmSkeleton.GetBoneCount();
+    currentObject.m_robotArmAnimations[currentAnimClipIndex].m_jointAnimValues.resize(jointCount);
 
     //Set the name and joint anim values array of the new animation clip
     fakeClip.m_name = name;
-    fakeClip.m_jointAnimValues = m_robotArmAnimations[currentAnimClipIndex].m_jointAnimValues;
+    fakeClip.m_jointAnimValues = currentObject.m_robotArmAnimations[currentAnimClipIndex].m_jointAnimValues;
 
     //Init default values for each joint
     if (jointCount > 0) {
@@ -456,25 +463,47 @@ Animation Scene::CreateRobotArmAnimationSpin(std::string name)
     {
         auto& currentJointValues = newAnim.m_jointAnimValues[i];
 
-        CreateAnimationSampler(i, &newAnim,
+        CreateAnimationSampler(currentObject, i, &newAnim,
             currentJointValues.startPos, currentJointValues.endPos,
             currentJointValues.startRot, currentJointValues.endRot,
             currentJointValues.startAngle, currentJointValues.endAngle);
     }
 
     //Resizing here since the default values above creates an extra empty clip
-    m_robotArmAnimations.resize(currentAnimClipIndex);
+    currentObject.m_robotArmAnimations.resize(currentAnimClipIndex);
 
     return newAnim;
 }
 
-void Scene::CreateAnimationSampler(int nodeIndex, Animation* anim, const DirectX::XMFLOAT3& startP, const DirectX::XMFLOAT3& endP, const DirectX::XMFLOAT3& startR, const DirectX::XMFLOAT3& endR, float startAngle, float endAngle)
+Animation Scene::CreateRobotArmAnimationFromExisting(SceneObject& currentObject, int index)
+{
+    Animation newAnim;
+    newAnim.m_name = currentObject.m_robotArmAnimations[index].m_name;
+    int jointCount = currentObject.m_robotArmAnimations[index].m_jointAnimValues.size();
+    newAnim.m_jointAnimValues.resize(jointCount);
+    newAnim.m_samplers.clear();
+    newAnim.m_channels.clear();
+
+    for (int i = 0; i < jointCount; i++)
+    {
+        auto& currentJointValues = currentObject.m_robotArmAnimations[index].m_jointAnimValues[i];
+
+        CreateAnimationSampler(currentObject, i, &newAnim,
+            currentJointValues.startPos, currentJointValues.endPos,
+            currentJointValues.startRot, currentJointValues.endRot,
+            currentJointValues.startAngle, currentJointValues.endAngle);
+    }
+
+    return newAnim;
+}
+
+void Scene::CreateAnimationSampler(SceneObject& currentObject, int nodeIndex, Animation* anim, const DirectX::XMFLOAT3& startP, const DirectX::XMFLOAT3& endP, const DirectX::XMFLOAT3& startR, const DirectX::XMFLOAT3& endR, float startAngle, float endAngle)
 {
     // Samplers for the hand's translation and rotation.
     AnimationSampler nodeTranslationSampler, nodeRotationSampler;
 
     // Get the hand's structural bind pose.
-    DirectX::XMMATRIX nodeBindPose = DirectX::XMLoadFloat4x4(&m_robotArmSkeleton.GetJoint(nodeIndex)->localBindTransform);
+    DirectX::XMMATRIX nodeBindPose = DirectX::XMLoadFloat4x4(&currentObject.m_robotArmSkeleton.GetJoint(nodeIndex)->localBindTransform);
 
     // --- Keyframe 1: The Start Pose (t = 0.0s) ---
     // The hand is in its default, non-animated state.
@@ -513,30 +542,6 @@ void Scene::CreateAnimationSampler(int nodeIndex, Animation* anim, const DirectX
     rotChannel.samplerIndex = nodeRotationSamplerIndex;
     rotChannel.jointIndex = nodeIndex;
     anim->m_channels.push_back(rotChannel);
-}
-
-Animation Scene::CreateRobotArmAnimationFromExisting(int index)
-{
-    Animation newAnim;
-	newAnim.m_name = m_robotArmAnimations[index].m_name;
-	newAnim.m_jointAnimValues = m_robotArmAnimations[index].m_jointAnimValues;
-
-	int jointCount = newAnim.m_jointAnimValues.size();
-
-	newAnim.m_samplers.clear();
-	newAnim.m_channels.clear();
-	//newAnim.m_samplers.reserve(jointCount * 2);
-
-    for (int i = 0; i < jointCount; i++)
-    {
-		auto& currentJointValues = m_robotArmAnimations[index].m_jointAnimValues[i];
-
-        CreateAnimationSampler(i, &newAnim,
-            currentJointValues.startPos, currentJointValues.endPos,
-            currentJointValues.startRot, currentJointValues.endRot,
-            currentJointValues.startAngle, currentJointValues.endAngle);
-    }
-	return newAnim;
 }
 
 //-------------------- ===[[[[WEEK 7.2 Pole & Fox Definitions here]]]]=== --------------------
@@ -692,22 +697,30 @@ void Scene::update(const float deltaTime)
     if (doOnce)
     {
         doOnce = false;
-        if (!m_robotArmAnimations.empty()) 
+        for (auto& obj : m_hierarchicalObjects) 
         {
-			m_robotArmSkeleton.PlayAnimation(&m_robotArmAnimations[0]);
+            if (!obj.m_robotArmAnimations.empty())
+            {
+                obj.m_robotArmSkeleton.PlayAnimation(&obj.m_robotArmAnimations[0]);
+            }
         }
+
     }
 
     //2. Update the Skeleton's Pose: This function now reads from the Animation object and updates all joint poses.
-    m_robotArmSkeleton.Update(deltaTime);
-
-    //3. Sync Visible Nodes with Skeleton (This logic is crucial): This copies the final world matrix of each joint to its visible sphere.
-    for (int i = 0; i < m_robotArmSkeleton.GetBoneCount(); ++i)
+    for (auto& obj : m_hierarchicalObjects)
     {
-        Joint* joint = m_robotArmSkeleton.GetJoint(i);
-        DirectX::XMMATRIX finalWorldTransform = XMLoadFloat4x4(&joint->finalTransform);
+        obj.m_robotArmSkeleton.Update(deltaTime);
 
-        m_armSegmentNodes[i]->SetMatrix(finalWorldTransform);
+
+        //3. Sync Visible Nodes with Skeleton (This logic is crucial): This copies the final world matrix of each joint to its visible sphere.
+        for (int i = 0; i < obj.m_robotArmSkeleton.GetBoneCount(); ++i)
+        {
+            Joint* joint = obj.m_robotArmSkeleton.GetJoint(i);
+            DirectX::XMMATRIX finalWorldTransform = XMLoadFloat4x4(&joint->finalTransform);
+
+            obj.m_armSegmentNodes[i]->SetMatrix(finalWorldTransform);
+        }
     }
 
    /* Note that m_armSegmentNodes is linked to m_sceneobject so you just need to call the 
@@ -737,6 +750,13 @@ void Scene::update(const float deltaTime)
 
     m_sceneobject.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made 
     m_sceneobject.RenderFrame(m_ctx, deltaTime); // renders the object
+    
+    for(SceneObject& obj : m_hierarchicalObjects)
+    {
+        obj.m_HierarchicalObject.AnimateFrame(m_ctx);
+        obj.m_HierarchicalObject.RenderFrame(m_ctx, deltaTime);
+	}
+
     m_sceneobjectSkinning.AnimateFrame(m_ctx);
     m_sceneobjectSkinning.RenderFrame(m_ctx, deltaTime);
     m_sceneobjectFox.AnimateFrame(m_ctx);
