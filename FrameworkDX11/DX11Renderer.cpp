@@ -508,7 +508,8 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
     ImGui::SetWindowFontScale(1.0f);
     ImGui::Spacing();
 
-    //----------------------------[[[[ Week 7.1 Robot Arm Component ]]]]----------------------------
+    //----------------------------[[[[ Week 7.1 Robot Arm Animation Controls ]]]]----------------------------
+    //Loop through each hierarchical object and give them anim ui controls
     for (int objIndex = 0; objIndex < m_pScene->m_hierarchicalObjects.size(); objIndex++)
     {
         auto& currentObj = m_pScene->m_hierarchicalObjects[objIndex];
@@ -521,7 +522,6 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
         // Make all widgets for this object use a unique ID scope so repeated labels don't collide.
         ImGui::PushID(objIndex);
 
-        // Optional: show the object as a collapsing header so each object has its own tree
         std::string objectHeader = "Object " + std::to_string(objIndex);
         if (ImGui::CollapsingHeader(objectHeader.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
         {
@@ -556,12 +556,12 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
 
             ImGui::Separator();
 
-            // Controlling the current animation at any level in hierarchy
+            //Controlling the current animation at any level in hierarchy
             bool animChanged = false;
             int currentAnimIndex = currentObj.currentAnimIndex;
             int nodeCount = static_cast<int>(currentObj.m_robotArmAnimations[currentAnimIndex].m_jointAnimValues.size());
 
-            // Loop through each joint/node in robot arm and apply the new values to JointAnimValues of the current animation clip
+            //Loop through each joint/node in robot arm and apply the new values to JointAnimValues of the current animation clip
             for (int jointIndex = 0; jointIndex < nodeCount; ++jointIndex)
             {
                 ImGui::PushID(jointIndex); // ensure uniqueness for each joint widget within this object
@@ -575,8 +575,7 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
                     if (ImGui::InputFloat3("End Position", &jointVals.endPos.x)) animChanged = true;
                     if (ImGui::InputFloat3("Start Rotation", &jointVals.startRot.x)) animChanged = true;
                     if (ImGui::InputFloat3("End Rotation", &jointVals.endRot.x)) animChanged = true;
-                    if (ImGui::SliderAngle("Start Angle", &jointVals.startAngle)) 
-                        animChanged = true;
+                    if (ImGui::SliderAngle("Start Angle", &jointVals.startAngle)) animChanged = true;
                     if (ImGui::SliderAngle("End Angle", &jointVals.endAngle)) animChanged = true;
                 }
 
@@ -585,10 +584,8 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
 
             if (animChanged)
             {
-                // Rebuild samplers/channels from edited joint values and replace the selected animation clip
                 Animation newAnim = m_pScene->CreateRobotArmAnimationFromExisting(currentObj, currentAnimIndex);
 
-                // Replace the animation clip safely
                 if (currentObj.m_robotArmAnimations.empty())
                 {
                     currentObj.m_robotArmAnimations.push_back(newAnim);
@@ -602,17 +599,37 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
             }
         }
 
-        ImGui::PopID(); // pop object scope
+        ImGui::PopID(); //Without this, ImGui complained about ID collisions on run time
+        ImGui::Spacing();
+        ImGui::Spacing();
+        ImGui::Spacing();
     }
 
-    // example usage
-    /*if (ImGui::RadioButton("Single threaded CPU", g_ttype == use_cpu_singlethread)) g_ttype = use_cpu_singlethread;
-    if (ImGui::RadioButton("Multi threaded CPU", g_ttype == use_cpu_multithread)) g_ttype = use_cpu_multithread;
-    if (ImGui::RadioButton("GPU", g_ttype == use_gpu)) g_ttype = use_gpu;
 
+    //----------------------------[[[[ Week 7.2 Fox Animation Control ]]]]----------------------------
+    ImGui::Separator();
+    ImGui::Begin("Fox Animation Clips", nullptr, ImGuiChildFlags_AlwaysAutoResize);
+
+    ImGui::SliderInt("Animation Clip", &m_pScene->foxAnimationIndex, 0, 2);
     ImGui::Spacing();
 
-    ImGui::SliderInt("Number of Cubes", &g_cube_count, 2, max_number_of_boxes);*/
+    if (m_pScene->foxAnimationIndex == 0) 
+    {
+        ImGui::Text("Run Animation");
+        ImGui::SliderFloat("Run Radius", &m_pScene->foxRunRadius, 3.0f, 6.0f);
+		ImGui::SliderFloat("Run Speed Max", &m_pScene->foxRunSpeedMax, XM_2PI / 8.0f, XM_2PI * 4.0f);
+    }
+    else if (m_pScene->foxAnimationIndex == 1) 
+    {
+        ImGui::Text("Idle Animation");
+    }
+    else if (m_pScene->foxAnimationIndex == 2) 
+    {
+		ImGui::Text("Walk Animation");
+		ImGui::SliderFloat("Walk Radius", &m_pScene->foxWalkRadius, 2.0f, 10.0f);
+    }
+
+    ImGui::End();
 }
 void DX11Renderer::completeIMGUIDraw()
 {

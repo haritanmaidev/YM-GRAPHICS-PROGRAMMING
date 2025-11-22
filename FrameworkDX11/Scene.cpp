@@ -937,57 +937,136 @@ void Scene::update(const float deltaTime)
 #pragma region Week7.2 Pole & Fox Animations Here
     //Pole Rig
     Skeleton* s = m_sceneobjectSkinning.GetRootNode(0)->GetSkeleton();
-    static bool doOnce2 = true;
-    if (doOnce2)
+    static bool doOnceP = true;
+    if (doOnceP)
     {
-        doOnce2 = false;
+        doOnceP = false;
         if (s->GetAnimationCount() > 0)
         {
             s->PlayAnimation((unsigned int)1);
         }
     }
 
-    //Fox Rig
-    static bool doOnce3 = true;
-    if (doOnce3) 
+    //Fox Animation Selection
+    if (lastAnimIndex != foxAnimationIndex) 
     {
-        doOnce3 = false;
-        m_sceneobjectFox.GetRootNode(0)->GetSkeleton()->PlayAnimation(unsigned int(0));
+        lastAnimIndex = foxAnimationIndex;
+
+        if (lastAnimIndex == 0) 
+        {
+            m_sceneobjectFox.GetRootNode(0)->GetSkeleton()->PlayAnimation(unsigned int(0));
+        }
+        else if(lastAnimIndex == 1)
+        {
+            m_sceneobjectFox.GetRootNode(0)->GetSkeleton()->PlayAnimation(1);
+        }
+        else if (lastAnimIndex == 2)
+        {
+            m_sceneobjectFox.GetRootNode(0)->GetSkeleton()->PlayAnimation(2);
+		}
     }
 
-    //Fox circular run movement
-    static float foxAngle = 0.0f;                 // current angle (radians)
-    constexpr float foxSpeed = XM_2PI / 8.0f;     // radians per second (one revolution in 8s)
-    constexpr float foxRadius = 4.0f;             // radius of circle
-    const DirectX::XMFLOAT3 foxCenter = { 0.0f, -0.5f, 0.0f }; // center position (y matches FoxInit)
-
-    // Integrate angle
-    foxAngle += foxSpeed * deltaTime;
-
-    // Compute position on XZ circle
-    float cosA = DirectX::XMScalarCos(foxAngle);
-    float sinA = DirectX::XMScalarSin(foxAngle);
-    DirectX::XMFLOAT3 foxPos = { foxCenter.x + foxRadius * cosA,  foxCenter.y,  foxCenter.z + foxRadius * sinA };
-
-    // Tangent (direction of motion) for increasing angle: derivative of (cos, sin) -> (-sin, cos)
-    DirectX::XMFLOAT3 tangent = { -sinA, 0.0f, cosA };
-
-    // Compute yaw so fox +Z (model forward) faces the tangent direction
-    float yaw = atan2f(tangent.x, tangent.z); 
-
-    // Build world matrix: rotation then translation
-    DirectX::XMMATRIX rot = DirectX::XMMatrixRotationY(yaw);
-    DirectX::XMMATRIX trans = DirectX::XMMatrixTranslation(foxPos.x, foxPos.y, foxPos.z);
-    DirectX::XMMATRIX foxWorld = rot * trans;
-
-    // Apply world matrix to fox root node (assumes first root is the fox model root)
-    SceneNode* foxRoot = m_sceneobjectFox.GetRootNode(0);
-    if (foxRoot)
+    //Fox Running
+    if (foxAnimationIndex == 0) 
     {
-        foxRoot->SetMatrix(foxWorld);
+        //Fox circular run movement
+        static float foxAngle = 0.0f;  
+        DirectX::XMFLOAT3 foxCenter = { 0.0f, -0.5f, 0.0f }; //Y Matches FoxInit
+
+        speedTimer += speedSign * deltaTime;
+        if (speedTimer > 1.0f)
+        {
+            speedTimer = 1.0f;
+            speedSign = -1.0f;
+        }
+        else if (speedTimer < 0.1f)
+        {
+            speedTimer = 0.0f;
+            speedSign = 1.0f;
+        }
+
+        //Lerp the fox speeds based on timer
+        foxSpeed = foxRunSpeedMax + (foxRunSpeedMin - foxRunSpeedMax) * speedTimer;
+
+        // Integrate angle
+        foxAngle += foxSpeed * deltaTime;
+
+        // Compute position on XZ circle
+        float cosA = DirectX::XMScalarCos(foxAngle);
+        float sinA = DirectX::XMScalarSin(foxAngle);
+        DirectX::XMFLOAT3 foxPos = { foxCenter.x + foxRunRadius * cosA,  foxCenter.y,  foxCenter.z + foxRunRadius * sinA };
+
+        // Tangent (direction of motion) for increasing angle: derivative of (cos, sin) -> (-sin, cos)
+        DirectX::XMFLOAT3 tangent = { -sinA, 0.0f, cosA };
+
+        // Compute yaw so fox +Z (model forward) faces the tangent direction
+        float yaw = atan2f(tangent.x, tangent.z);
+
+        // Build world matrix: rotation then translation
+        DirectX::XMMATRIX rot = DirectX::XMMatrixRotationY(yaw);
+        DirectX::XMMATRIX trans = DirectX::XMMatrixTranslation(foxPos.x, foxPos.y, foxPos.z);
+        DirectX::XMMATRIX foxWorld = rot * trans;
+
+        // Apply world matrix to fox root node (assumes first root is the fox model root)
+        SceneNode* foxRoot = m_sceneobjectFox.GetRootNode(0);
+        if (foxRoot)
+        {
+            foxRoot->SetMatrix(foxWorld);
+        }
     }
-    //Fox idle
+    //Fox Idle
+    else if (foxAnimationIndex == 1)
+    {
+        //Nothing, Idle
+    }
     //Fox walk movement
+    else if (foxAnimationIndex == 2)
+    {
+        static float foxAngle = 0.0f;  
+        DirectX::XMFLOAT3 foxCenter = { 0.0f, -0.5f, 0.0f }; //Y Matches FoxInit
+
+        speedTimer += speedSign * deltaTime;
+        if (speedTimer > 1.0f)
+        {
+            speedTimer = 1.0f;
+            speedSign = -1.0f;
+        }
+        else if (speedTimer < 0.1f)
+        {
+            speedTimer = 0.0f;
+            speedSign = 1.0f;
+        }
+
+        //Lerp the fox speeds based on timer
+        foxSpeed = foxWalkSpeedMax + (foxWalkSpeedMin - foxWalkSpeedMax) * speedTimer;
+
+        // Integrate angle
+        foxAngle += foxSpeed * deltaTime;
+
+        // Compute position on XZ circle
+        float cosA = DirectX::XMScalarCos(foxAngle);
+        float sinA = DirectX::XMScalarSin(foxAngle);
+        DirectX::XMFLOAT3 foxPos = { foxCenter.x + foxWalkRadius * cosA,  foxCenter.y,  foxCenter.z + foxWalkRadius * sinA };
+
+        // Tangent (direction of motion) for increasing angle: derivative of (cos, sin) -> (-sin, cos)
+        DirectX::XMFLOAT3 tangent = { -sinA, 0.0f, cosA };
+
+        // Compute yaw so fox +Z (model forward) faces the tangent direction
+        float yaw = atan2f(tangent.x, tangent.z);
+
+        // Build world matrix: rotation then translation
+        DirectX::XMMATRIX rot = DirectX::XMMatrixRotationY(yaw);
+        DirectX::XMMATRIX trans = DirectX::XMMatrixTranslation(foxPos.x, foxPos.y, foxPos.z);
+        DirectX::XMMATRIX foxWorld = rot * trans;
+
+        // Apply world matrix to fox root node (assumes first root is the fox model root)
+        SceneNode* foxRoot = m_sceneobjectFox.GetRootNode(0);
+        if (foxRoot)
+        {
+            foxRoot->SetMatrix(foxWorld);
+        }
+
+	}
 
 
 #pragma endregion
