@@ -104,6 +104,9 @@ public:
 	Animation CreateRobotArmAnimationDefault(SceneObject& currentObject, std::string name);
 	Animation CreateRobotArmAnimationTriangle(SceneObject& currentObject, std::string name);
 	Animation CreateRobotArmAnimationSpin(SceneObject& currentObject, std::string name);
+	Animation CreateRobotArmAnimationDingDong(SceneObject& currentObject, std::string name);
+	Animation CreateRobotArmAnimationCluster(SceneObject& currentObject, std::string name);
+	Animation CreateRobotArmAnimationLaunch(SceneObject& currentObject, std::string name);
 	Animation CreateRobotArmAnimationFromExisting(SceneObject& currentObject, int index);
 	void CreateAnimationSampler(SceneObject& currentObject, int nodeIndex, Animation* anim, const DirectX::XMFLOAT3& startP,const DirectX::XMFLOAT3& endP, const DirectX::XMFLOAT3& startR, const DirectX::XMFLOAT3& endR,float startAngle, float endAngle);
 
