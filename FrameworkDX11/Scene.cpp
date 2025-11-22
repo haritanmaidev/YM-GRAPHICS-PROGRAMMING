@@ -1,5 +1,6 @@
 #include "Scene.h"
 #include "DDSTextureLoader.h"
+#include <cmath>
 
 //Helper for Translation
 DirectX::XMFLOAT3 BakeTranslationOntoBindPose(const DirectX::XMMATRIX& bindPose, const DirectX::XMFLOAT3& animTranslation)
@@ -231,6 +232,8 @@ HRESULT Scene::AnimationHierarchyInit()
 }
 
 //-------------------- ===[[[[WEEK 7.1 Init & Anim Definitions here]]]]=== --------------------
+#pragma region Skeleton Arm Animations
+
 void Scene::SkeletonArmInit(int sceneObjCount)
 {  
     m_hierarchicalObjects.resize(sceneObjCount);
@@ -747,6 +750,7 @@ void Scene::CreateAnimationSampler(SceneObject& currentObject, int nodeIndex, An
     rotChannel.jointIndex = nodeIndex;
     anim->m_channels.push_back(rotChannel);
 }
+#pragma endregion
 
 //-------------------- ===[[[[WEEK 7.2 Pole & Fox Definitions here]]]]=== --------------------
 void Scene::SkeletonPoleInit() 
@@ -948,8 +952,44 @@ void Scene::update(const float deltaTime)
     if (doOnce3) 
     {
         doOnce3 = false;
-        m_sceneobjectFox.GetRootNode(0)->GetSkeleton()->PlayAnimation(2);
+        m_sceneobjectFox.GetRootNode(0)->GetSkeleton()->PlayAnimation(unsigned int(0));
     }
+
+    //Fox circular run movement
+    static float foxAngle = 0.0f;                 // current angle (radians)
+    constexpr float foxSpeed = XM_2PI / 8.0f;     // radians per second (one revolution in 8s)
+    constexpr float foxRadius = 4.0f;             // radius of circle
+    const DirectX::XMFLOAT3 foxCenter = { 0.0f, -0.5f, 0.0f }; // center position (y matches FoxInit)
+
+    // Integrate angle
+    foxAngle += foxSpeed * deltaTime;
+
+    // Compute position on XZ circle
+    float cosA = DirectX::XMScalarCos(foxAngle);
+    float sinA = DirectX::XMScalarSin(foxAngle);
+    DirectX::XMFLOAT3 foxPos = { foxCenter.x + foxRadius * cosA,  foxCenter.y,  foxCenter.z + foxRadius * sinA };
+
+    // Tangent (direction of motion) for increasing angle: derivative of (cos, sin) -> (-sin, cos)
+    DirectX::XMFLOAT3 tangent = { -sinA, 0.0f, cosA };
+
+    // Compute yaw so fox +Z (model forward) faces the tangent direction
+    float yaw = atan2f(tangent.x, tangent.z); 
+
+    // Build world matrix: rotation then translation
+    DirectX::XMMATRIX rot = DirectX::XMMatrixRotationY(yaw);
+    DirectX::XMMATRIX trans = DirectX::XMMatrixTranslation(foxPos.x, foxPos.y, foxPos.z);
+    DirectX::XMMATRIX foxWorld = rot * trans;
+
+    // Apply world matrix to fox root node (assumes first root is the fox model root)
+    SceneNode* foxRoot = m_sceneobjectFox.GetRootNode(0);
+    if (foxRoot)
+    {
+        foxRoot->SetMatrix(foxWorld);
+    }
+    //Fox idle
+    //Fox walk movement
+
+
 #pragma endregion
 
     m_sceneobject.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made 
