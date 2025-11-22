@@ -73,7 +73,7 @@ HRESULT Scene::init(HWND hwnd, const Microsoft::WRL::ComPtr<ID3D11Device>& devic
 
     //-------------------- [[WEEK 7.2 - SIMPLERIG/POLE AND FOX INIT HERE]] --------------------
 	SkeletonPoleInit(); 
-    FoxInit();
+    FoxInit(3);
 
     m_pCamera = new Camera(XMFLOAT3(8, 0, 2), XMFLOAT3(-1, 0, 0), XMFLOAT3(0.0f, 1.0f, 0.0f), width, height); //Fox Cam
     //m_pCamera = new Camera(XMFLOAT3(0, 0, -10), XMFLOAT3(0, 0, 1), XMFLOAT3(0.0f, 1.0f, 0.0f), width, height); //Pole PreSkin Cam
@@ -816,10 +816,15 @@ void Scene::CreateWaveAnimationSamplerForPole(int nodeIndex, Animation* anim, Sk
     anim->m_channels.push_back(rotChannel);
 }
 
-void Scene::FoxInit() 
+void Scene::FoxInit(int foxCount) 
 {
-    bool ok = m_sceneobjectFox.LoadGLTFWithSkeleton(m_ctx, L"Resources\\Fox.gltf");
-    m_sceneobjectFox.AddTranslationToRoots({0, -0.5 ,4});
+	m_foxObjects.resize(foxCount);
+
+    for(int i = 0; i < foxCount; i++)
+    {
+        bool ok = m_foxObjects[i].m_foxSceneObject.LoadGLTFWithSkeleton(m_ctx, L"Resources\\Fox.gltf");
+        m_foxObjects[i].m_foxSceneObject.AddTranslationToRoots({ 0, -0.5 + i ,4 });
+	}
 }
 
 void Scene::update(const float deltaTime)
@@ -899,13 +904,14 @@ void Scene::update(const float deltaTime)
     //    currentNode->SetMatrix(rotationMatrix * translationMatrix);
     //}
 #pragma endregion
+
 #pragma region Week7.1 Robot Arm Animations Here
     //1. Select and Play Animation: (Here you could use keyboard input or ImGui to choose an animation from your vector)
     static bool doOnce = true;
     if (doOnce)
     {
         doOnce = false;
-        for (auto& obj : m_hierarchicalObjects) 
+        for (auto& obj : m_hierarchicalObjects)
         {
             if (!obj.m_robotArmAnimations.empty())
             {
@@ -931,11 +937,12 @@ void Scene::update(const float deltaTime)
         }
     }
 
-   /* Note that m_armSegmentNodes is linked to m_sceneobject so you just need to call the 
-    m_sceneobject AnimateFrame and RenderFrame methods as you may already be doing */
+    /* Note that m_armSegmentNodes is linked to m_sceneobject so you just need to call the
+     m_sceneobject AnimateFrame and RenderFrame methods as you may already be doing */
 #pragma endregion
+
 #pragma region Week7.2 Pole & Fox Animations Here
-    //Pole Rig
+     //Pole Animation
     Skeleton* s = m_sceneobjectSkinning.GetRootNode(0)->GetSkeleton();
     static bool doOnceP = true;
     if (doOnceP)
@@ -947,141 +954,152 @@ void Scene::update(const float deltaTime)
         }
     }
 
-    //Fox Animation Selection
-    if (lastAnimIndex != foxAnimationIndex) 
+    //Fox Logic
+    for (int i = 0; i < m_foxObjects.size(); i++)
     {
-        lastAnimIndex = foxAnimationIndex;
+        Fox& fox = m_foxObjects[i];
 
-        if (lastAnimIndex == 0) 
+        //Fox Animation Selection
+        if (fox.lastAnimIndex != fox.foxAnimationIndex)
         {
-            m_sceneobjectFox.GetRootNode(0)->GetSkeleton()->PlayAnimation(unsigned int(0));
+            fox.lastAnimIndex = fox.foxAnimationIndex;
+
+            if (fox.lastAnimIndex == 0)
+            {
+                fox.m_foxSceneObject.GetRootNode(0)->GetSkeleton()->PlayAnimation(unsigned int(0));
+            }
+            else if (fox.lastAnimIndex == 1)
+            {
+                fox.m_foxSceneObject.GetRootNode(0)->GetSkeleton()->PlayAnimation(1);
+            }
+            else if (fox.lastAnimIndex == 2)
+            {
+                fox.m_foxSceneObject.GetRootNode(0)->GetSkeleton()->PlayAnimation(2);
+            }
         }
-        else if(lastAnimIndex == 1)
+
+        //Fox Running
+        if (fox.foxAnimationIndex == 0)
         {
-            m_sceneobjectFox.GetRootNode(0)->GetSkeleton()->PlayAnimation(1);
+            //Fox circular run movement
+            static float foxAngle = 0.0f;
+            DirectX::XMFLOAT3 foxCenter = { 0.0f, -0.5f, 0.0f + i }; //Y Matches FoxInit
+
+            fox.speedTimer += fox.speedSign * deltaTime;
+            if (fox.speedTimer > 1.0f)
+            {
+                fox.speedTimer = 1.0f;
+                fox.speedSign = -1.0f;
+            }
+            else if (fox.speedTimer < 0.1f)
+            {
+                fox.speedTimer = 0.0f;
+                fox.speedSign = 1.0f;
+            }
+
+            //Lerp the fox speeds based on timer
+            fox.foxSpeed = fox.foxRunSpeedMax + (fox.foxRunSpeedMin - fox.foxRunSpeedMax) * fox.speedTimer;
+
+            // Integrate angle
+            foxAngle += fox.foxSpeed * deltaTime;
+
+            // Compute position on XZ circle
+            float cosA = DirectX::XMScalarCos(foxAngle);
+            float sinA = DirectX::XMScalarSin(foxAngle);
+            DirectX::XMFLOAT3 foxPos = { foxCenter.x + fox.foxRunRadius * cosA,  foxCenter.y,  foxCenter.z + fox.foxRunRadius * sinA };
+
+            // Tangent (direction of motion) for increasing angle: derivative of (cos, sin) -> (-sin, cos)
+            DirectX::XMFLOAT3 tangent = { -sinA, 0.0f, cosA };
+
+            // Compute yaw so fox +Z (model forward) faces the tangent direction
+            float yaw = atan2f(tangent.x, tangent.z);
+
+            // Build world matrix: rotation then translation
+            DirectX::XMMATRIX rot = DirectX::XMMatrixRotationY(yaw);
+            DirectX::XMMATRIX trans = DirectX::XMMatrixTranslation(foxPos.x, foxPos.y, foxPos.z);
+            DirectX::XMMATRIX foxWorld = rot * trans;
+
+            // Apply world matrix to fox root node (assumes first root is the fox model root)
+            SceneNode* foxRoot = fox.m_foxSceneObject.GetRootNode(0);
+            if (foxRoot)
+            {
+                foxRoot->SetMatrix(foxWorld);
+            }
         }
-        else if (lastAnimIndex == 2)
+        //Fox Idle
+        else if (fox.foxAnimationIndex == 1)
         {
-            m_sceneobjectFox.GetRootNode(0)->GetSkeleton()->PlayAnimation(2);
-		}
+            //Nothing, Idle
+        }
+        //Fox walk movement
+        else if (fox.foxAnimationIndex == 2)
+        {
+            static float foxAngle = 0.0f;
+            DirectX::XMFLOAT3 foxCenter = { 0.0f, -0.5f, 0.0f }; //Y Matches FoxInit
+
+            fox.speedTimer += fox.speedSign * deltaTime;
+            if (fox.speedTimer > 1.0f)
+            {
+                fox.speedTimer = 1.0f;
+                fox.speedSign = -1.0f;
+            }
+            else if (fox.speedTimer < 0.1f)
+            {
+                fox.speedTimer = 0.0f;
+                fox.speedSign = 1.0f;
+            }
+
+            //Lerp the fox speeds based on timer
+            fox.foxSpeed = fox.foxWalkSpeedMax + (fox.foxWalkSpeedMin - fox.foxWalkSpeedMax) * fox.speedTimer;
+
+            // Integrate angle
+            foxAngle += fox.foxSpeed * deltaTime;
+
+            // Compute position on XZ circle
+            float cosA = DirectX::XMScalarCos(foxAngle);
+            float sinA = DirectX::XMScalarSin(foxAngle);
+            DirectX::XMFLOAT3 foxPos = { foxCenter.x + fox.foxWalkRadius * cosA,  foxCenter.y,  foxCenter.z + fox.foxWalkRadius * sinA };
+
+            // Tangent (direction of motion) for increasing angle: derivative of (cos, sin) -> (-sin, cos)
+            DirectX::XMFLOAT3 tangent = { -sinA, 0.0f, cosA };
+
+            // Compute yaw so fox +Z (model forward) faces the tangent direction
+            float yaw = atan2f(tangent.x, tangent.z);
+
+            // Build world matrix: rotation then translation
+            DirectX::XMMATRIX rot = DirectX::XMMatrixRotationY(yaw);
+            DirectX::XMMATRIX trans = DirectX::XMMatrixTranslation(foxPos.x, foxPos.y, foxPos.z);
+            DirectX::XMMATRIX foxWorld = rot * trans;
+
+            // Apply world matrix to fox root node (assumes first root is the fox model root)
+            SceneNode* foxRoot = fox.m_foxSceneObject.GetRootNode(0);
+            if (foxRoot)
+            {
+                foxRoot->SetMatrix(foxWorld);
+            }
+        }
     }
-
-    //Fox Running
-    if (foxAnimationIndex == 0) 
-    {
-        //Fox circular run movement
-        static float foxAngle = 0.0f;  
-        DirectX::XMFLOAT3 foxCenter = { 0.0f, -0.5f, 0.0f }; //Y Matches FoxInit
-
-        speedTimer += speedSign * deltaTime;
-        if (speedTimer > 1.0f)
-        {
-            speedTimer = 1.0f;
-            speedSign = -1.0f;
-        }
-        else if (speedTimer < 0.1f)
-        {
-            speedTimer = 0.0f;
-            speedSign = 1.0f;
-        }
-
-        //Lerp the fox speeds based on timer
-        foxSpeed = foxRunSpeedMax + (foxRunSpeedMin - foxRunSpeedMax) * speedTimer;
-
-        // Integrate angle
-        foxAngle += foxSpeed * deltaTime;
-
-        // Compute position on XZ circle
-        float cosA = DirectX::XMScalarCos(foxAngle);
-        float sinA = DirectX::XMScalarSin(foxAngle);
-        DirectX::XMFLOAT3 foxPos = { foxCenter.x + foxRunRadius * cosA,  foxCenter.y,  foxCenter.z + foxRunRadius * sinA };
-
-        // Tangent (direction of motion) for increasing angle: derivative of (cos, sin) -> (-sin, cos)
-        DirectX::XMFLOAT3 tangent = { -sinA, 0.0f, cosA };
-
-        // Compute yaw so fox +Z (model forward) faces the tangent direction
-        float yaw = atan2f(tangent.x, tangent.z);
-
-        // Build world matrix: rotation then translation
-        DirectX::XMMATRIX rot = DirectX::XMMatrixRotationY(yaw);
-        DirectX::XMMATRIX trans = DirectX::XMMatrixTranslation(foxPos.x, foxPos.y, foxPos.z);
-        DirectX::XMMATRIX foxWorld = rot * trans;
-
-        // Apply world matrix to fox root node (assumes first root is the fox model root)
-        SceneNode* foxRoot = m_sceneobjectFox.GetRootNode(0);
-        if (foxRoot)
-        {
-            foxRoot->SetMatrix(foxWorld);
-        }
-    }
-    //Fox Idle
-    else if (foxAnimationIndex == 1)
-    {
-        //Nothing, Idle
-    }
-    //Fox walk movement
-    else if (foxAnimationIndex == 2)
-    {
-        static float foxAngle = 0.0f;  
-        DirectX::XMFLOAT3 foxCenter = { 0.0f, -0.5f, 0.0f }; //Y Matches FoxInit
-
-        speedTimer += speedSign * deltaTime;
-        if (speedTimer > 1.0f)
-        {
-            speedTimer = 1.0f;
-            speedSign = -1.0f;
-        }
-        else if (speedTimer < 0.1f)
-        {
-            speedTimer = 0.0f;
-            speedSign = 1.0f;
-        }
-
-        //Lerp the fox speeds based on timer
-        foxSpeed = foxWalkSpeedMax + (foxWalkSpeedMin - foxWalkSpeedMax) * speedTimer;
-
-        // Integrate angle
-        foxAngle += foxSpeed * deltaTime;
-
-        // Compute position on XZ circle
-        float cosA = DirectX::XMScalarCos(foxAngle);
-        float sinA = DirectX::XMScalarSin(foxAngle);
-        DirectX::XMFLOAT3 foxPos = { foxCenter.x + foxWalkRadius * cosA,  foxCenter.y,  foxCenter.z + foxWalkRadius * sinA };
-
-        // Tangent (direction of motion) for increasing angle: derivative of (cos, sin) -> (-sin, cos)
-        DirectX::XMFLOAT3 tangent = { -sinA, 0.0f, cosA };
-
-        // Compute yaw so fox +Z (model forward) faces the tangent direction
-        float yaw = atan2f(tangent.x, tangent.z);
-
-        // Build world matrix: rotation then translation
-        DirectX::XMMATRIX rot = DirectX::XMMatrixRotationY(yaw);
-        DirectX::XMMATRIX trans = DirectX::XMMatrixTranslation(foxPos.x, foxPos.y, foxPos.z);
-        DirectX::XMMATRIX foxWorld = rot * trans;
-
-        // Apply world matrix to fox root node (assumes first root is the fox model root)
-        SceneNode* foxRoot = m_sceneobjectFox.GetRootNode(0);
-        if (foxRoot)
-        {
-            foxRoot->SetMatrix(foxWorld);
-        }
-
-	}
-
 
 #pragma endregion
 
     m_sceneobject.AnimateFrame(m_ctx); // this updates the transform matrix for the object - this should be called after all transforms have been made 
     m_sceneobject.RenderFrame(m_ctx, deltaTime); // renders the object
-    
-    for(SceneObject& obj : m_hierarchicalObjects)
+
+    //Week 7.1
+    for (SceneObject& obj : m_hierarchicalObjects)
     {
         obj.m_HierarchicalObject.AnimateFrame(m_ctx);
         obj.m_HierarchicalObject.RenderFrame(m_ctx, deltaTime);
-	}
+    }
 
+    //Week 7.2 Pole
     m_sceneobjectSkinning.AnimateFrame(m_ctx);
     m_sceneobjectSkinning.RenderFrame(m_ctx, deltaTime);
-    m_sceneobjectFox.AnimateFrame(m_ctx);
-    m_sceneobjectFox.RenderFrame(m_ctx, deltaTime);
+
+    //Week 7.2 Foxes
+    for (Fox& fox : m_foxObjects)
+    {
+        fox.m_foxSceneObject.AnimateFrame(m_ctx);
+        fox.m_foxSceneObject.RenderFrame(m_ctx, deltaTime);
+    }
 }

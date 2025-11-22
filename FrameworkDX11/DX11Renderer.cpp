@@ -610,27 +610,38 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
     ImGui::Separator();
     ImGui::Begin("Fox Animation Clips", nullptr, ImGuiChildFlags_AlwaysAutoResize);
 
-    ImGui::SliderInt("Animation Clip", &m_pScene->foxAnimationIndex, 0, 2);
-    ImGui::Spacing();
+    for(int i = 0; i < m_pScene->m_foxObjects.size(); i++)
+    {
+        ImGui::PushID(i);
+        ImGui::Text("Fox Object %d", i);
 
-    if (m_pScene->foxAnimationIndex == 0) 
-    {
-        ImGui::Text("Run Animation");
-        ImGui::SliderFloat("Run Radius", &m_pScene->foxRunRadius, 3.0f, 6.0f);
-		ImGui::SliderFloat("Run Speed Max", &m_pScene->foxRunSpeedMax, XM_2PI / 8.0f, XM_2PI * 4.0f);
-    }
-    else if (m_pScene->foxAnimationIndex == 1) 
-    {
-        ImGui::Text("Idle Animation");
-    }
-    else if (m_pScene->foxAnimationIndex == 2) 
-    {
-		ImGui::Text("Walk Animation");
-		ImGui::SliderFloat("Walk Radius", &m_pScene->foxWalkRadius, 2.0f, 10.0f);
-    }
+		auto& currentFox = m_pScene->m_foxObjects[i];
+
+        ImGui::SliderInt("Animation Clip", &currentFox.foxAnimationIndex, 0, 2);
+        ImGui::Spacing();
+
+        if (currentFox.foxAnimationIndex == 0)
+        {
+            ImGui::Text("Run Animation");
+            ImGui::SliderFloat("Run Radius", &currentFox.foxRunRadius, 3.0f, 6.0f);
+            ImGui::SliderFloat("Run Speed Max", &currentFox.foxRunSpeedMax, XM_2PI / 8.0f, XM_2PI * 4.0f);
+        }
+        else if (currentFox.foxAnimationIndex == 1)
+        {
+            ImGui::Text("Idle Animation");
+        }
+        else if  (currentFox.foxAnimationIndex == 2)
+        {
+            ImGui::Text("Walk Animation");
+            ImGui::SliderFloat("Walk Radius", &currentFox.foxWalkRadius, 2.0f, 10.0f);
+        }
+
+		ImGui::PopID();
+	}
 
     ImGui::End();
 }
+
 void DX11Renderer::completeIMGUIDraw()
 {
     ImGui::Render();

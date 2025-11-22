@@ -54,7 +54,6 @@ public:
 	IRenderingContext m_ctx;
 	SceneGraph m_sceneobject;
 	SceneGraph m_sceneobjectSkinning;
-	SceneGraph m_sceneobjectFox;
 
 	//------------------------ [[WEEK 5,6 - ANIMATION VALUES N STUFF SECTION]] ------------------------
 	HRESULT AnimationHierarchyInit(); //Custom Animation Hierarchy Init Function
@@ -110,27 +109,36 @@ public:
 	Animation CreateRobotArmAnimationFromExisting(SceneObject& currentObject, int index);
 	void CreateAnimationSampler(SceneObject& currentObject, int nodeIndex, Animation* anim, const DirectX::XMFLOAT3& startP,const DirectX::XMFLOAT3& endP, const DirectX::XMFLOAT3& startR, const DirectX::XMFLOAT3& endR,float startAngle, float endAngle);
 
-
 	//Week 7.2 Custom Skeleton Pole & Fox
+	//Pole
 	void SkeletonPoleInit(); 
 	Animation* CreatePoleAnimation(Skeleton* skeleton);
 	void CreateWaveAnimationSamplerForPole(int nodeIndex, Animation* anim, Skeleton* skeleton);
 	
-	void FoxInit();
-	int foxAnimationIndex =0;
-	int lastAnimIndex = -1;
-	float foxSpeed = 0.0f; //Current speed of fox
+	//Fox
+	void FoxInit(int foxCount);
 
-	float foxRunRadius = 4.0f;
-	float foxRunSpeedMax = XM_2PI/ 4.0f; //Fox's faster speed
-	float foxRunSpeedMin = XM_2PI / 8.0f;
+	struct Fox
+	{
+		SceneGraph m_foxSceneObject;
 
-	float foxWalkRadius = 6.0f;
-	float foxWalkSpeedMax = XM_2PI / 14.0f; //Fox's slower speed
-	float foxWalkSpeedMin = XM_2PI / 16.0f;
+		int foxAnimationIndex = 0;
+		int lastAnimIndex = -1;
+		float foxSpeed = 0.0f; //Current speed of fox
 
-	float speedTimer = 0.0f; //speedTimer is the t value for lerping between fox's speed1 and speed2
-	int speedSign = 1;
+		float foxRunRadius = 4.0f;
+		float foxRunSpeedMax = XM_2PI / 4.0f; //Fox's faster speed
+		float foxRunSpeedMin = XM_2PI / 8.0f;
+
+		float foxWalkRadius = 6.0f;
+		float foxWalkSpeedMax = XM_2PI / 14.0f; //Fox's slower speed
+		float foxWalkSpeedMin = XM_2PI / 16.0f;
+
+		float speedTimer = 0.0f; //speedTimer is the t value for lerping between fox's speed1 and speed2
+		int speedSign = 1;
+	};
+
+	std::vector<Fox> m_foxObjects;
 	//------------------------ [[END OF WEEK 7 - SKELETON STUFF SECTION]] ------------------------
 
 private:
