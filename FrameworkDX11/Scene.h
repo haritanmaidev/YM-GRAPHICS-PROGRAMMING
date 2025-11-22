@@ -97,6 +97,11 @@ public:
 	std::vector<SceneNode*> m_armSegmentNodes;
 	std::vector<Animation> m_robotArmAnimations;
 
+	struct SceneObject 
+	{
+
+	};
+
 	//Week 7.2 Custom Skeleton Pole & Fox
 	void SkeletonPoleInit(); 
 	Animation* CreatePoleAnimation(Skeleton* skeleton);
