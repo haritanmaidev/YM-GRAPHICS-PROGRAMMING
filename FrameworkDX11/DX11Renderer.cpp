@@ -510,9 +510,9 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
 
     //----------------------------[[[[ Week 7.1 Robot Arm Animation Controls ]]]]----------------------------
     //Loop through each hierarchical object and give them anim ui controls
-    for (int objIndex = 0; objIndex < m_pScene->m_hierarchicalObjects.size(); objIndex++)
+    for (int i = 0; i < m_pScene->m_hierarchicalObjects.size(); i++)
     {
-        auto& currentObj = m_pScene->m_hierarchicalObjects[objIndex];
+        auto& currentObj = m_pScene->m_hierarchicalObjects[i];
 
         // Ensure we have consistent state even if no animations exist
         int animClipCount = static_cast<int>(currentObj.m_robotArmAnimations.size());
@@ -520,9 +520,9 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
             continue;
 
         // Make all widgets for this object use a unique ID scope so repeated labels don't collide.
-        ImGui::PushID(objIndex);
+        ImGui::PushID(i);
 
-        std::string objectHeader = "Object " + std::to_string(objIndex);
+        std::string objectHeader = "Object " + std::to_string(i);
         if (ImGui::CollapsingHeader(objectHeader.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
         {
             // Store name of animations for ImGui Combo
@@ -613,30 +613,36 @@ void DX11Renderer::startIMGUIDraw(const unsigned int FPS)
     for(int i = 0; i < m_pScene->m_foxObjects.size(); i++)
     {
         ImGui::PushID(i);
-        ImGui::Text("Fox Object %d", i);
-
 		auto& currentFox = m_pScene->m_foxObjects[i];
 
-        ImGui::SliderInt("Animation Clip", &currentFox.foxAnimationIndex, 0, 2);
+        std::string objectHeader = "Fox " + std::to_string(i);
+        if (ImGui::CollapsingHeader(objectHeader.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) 
+        {
+            ImGui::SliderInt("Animation Clip", &currentFox.foxAnimationIndex, 0, 2);
+            ImGui::Spacing();
+
+            if (currentFox.foxAnimationIndex == 0)
+            {
+                ImGui::Text("Run Animation");
+                ImGui::SliderFloat("Run Radius", &currentFox.foxRunRadius, 3.0f, 6.0f);
+                ImGui::SliderFloat("Run Speed Max", &currentFox.foxRunSpeedMax, XM_2PI / 8.0f, XM_2PI * 4.0f);
+            }
+            else if (currentFox.foxAnimationIndex == 1)
+            {
+                ImGui::Text("Idle Animation");
+            }
+            else if (currentFox.foxAnimationIndex == 2)
+            {
+                ImGui::Text("Walk Animation");
+                ImGui::SliderFloat("Walk Radius", &currentFox.foxWalkRadius, 2.0f, 10.0f);
+            }
+        }
+
+		ImGui::Spacing();
+        ImGui::Spacing();
         ImGui::Spacing();
 
-        if (currentFox.foxAnimationIndex == 0)
-        {
-            ImGui::Text("Run Animation");
-            ImGui::SliderFloat("Run Radius", &currentFox.foxRunRadius, 3.0f, 6.0f);
-            ImGui::SliderFloat("Run Speed Max", &currentFox.foxRunSpeedMax, XM_2PI / 8.0f, XM_2PI * 4.0f);
-        }
-        else if (currentFox.foxAnimationIndex == 1)
-        {
-            ImGui::Text("Idle Animation");
-        }
-        else if  (currentFox.foxAnimationIndex == 2)
-        {
-            ImGui::Text("Walk Animation");
-            ImGui::SliderFloat("Walk Radius", &currentFox.foxWalkRadius, 2.0f, 10.0f);
-        }
-
-		ImGui::PopID();
+        ImGui::PopID();
 	}
 
     ImGui::End();
