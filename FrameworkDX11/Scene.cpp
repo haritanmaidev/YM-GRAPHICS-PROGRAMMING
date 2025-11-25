@@ -1000,19 +1000,17 @@ void Scene::update(const float deltaTime)
 
             //Lerp the fox speeds based on timer
             fox.foxSpeed = fox.foxRunSpeedMax + (fox.foxRunSpeedMin - fox.foxRunSpeedMax) * fox.speedTimer;
-
-            // Integrate angle
             fox.foxAngle += fox.foxSpeed * deltaTime;
 
-            // Compute position on XZ circle
+            //Get position on XZ circle
             float cosA = DirectX::XMScalarCos(fox.foxAngle);
             float sinA = DirectX::XMScalarSin(fox.foxAngle);
             DirectX::XMFLOAT3 foxPos = { foxCenter.x + fox.foxRunRadius * cosA,  foxCenter.y,  foxCenter.z + fox.foxRunRadius * sinA };
 
-            // Tangent (direction of motion) for increasing angle: derivative of (cos, sin) -> (-sin, cos)
+            //Tangent (direction of motion)
             DirectX::XMFLOAT3 tangent = { -sinA, 0.0f, cosA };
 
-            // Compute yaw so fox +Z (model forward) faces the tangent direction
+            //Compute yaw so fox +Z (model forward) faces the tangent direction
             float yaw = atan2f(tangent.x, tangent.z);
 
             // Build world matrix: rotation then translation
@@ -1060,18 +1058,18 @@ void Scene::update(const float deltaTime)
             float sinA = DirectX::XMScalarSin(fox.foxAngle);
             DirectX::XMFLOAT3 foxPos = { foxCenter.x + fox.foxWalkRadius * cosA,  foxCenter.y,  foxCenter.z + fox.foxWalkRadius * sinA };
 
-            // Tangent (direction of motion) for increasing angle: derivative of (cos, sin) -> (-sin, cos)
+            //Tangent (direction of motion) for increasing angle: derivative of (cos, sin) -> (-sin, cos)
             DirectX::XMFLOAT3 tangent = { -sinA, 0.0f, cosA };
 
-            // Compute yaw so fox +Z (model forward) faces the tangent direction
+            //Compute yaw so fox +Z (model forward) faces the tangent direction
             float yaw = atan2f(tangent.x, tangent.z);
 
-            // Build world matrix: rotation then translation
+            //Build world matrix: rotation then translation
             DirectX::XMMATRIX rot = DirectX::XMMatrixRotationY(yaw);
             DirectX::XMMATRIX trans = DirectX::XMMatrixTranslation(foxPos.x, foxPos.y, foxPos.z);
             DirectX::XMMATRIX foxWorld = rot * trans;
 
-            // Apply world matrix to fox root node (assumes first root is the fox model root)
+            //Apply world matrix to fox root node (assumes first root is the fox model root)
             SceneNode* foxRoot = fox.m_foxSceneObject.GetRootNode(0);
             if (foxRoot)
             {
