@@ -157,7 +157,7 @@ void Scene::update(const float deltaTime)
 	AnimationSampler sampler = m_myAnimation.m_samplers[0];
     int nextKeyframe = -1;
 
-    for(int i = 0; sampler.timestamps.size(); i++) //Loop through sampler's timestamps to find next keyframe to animate
+    for(int i = 0; i < sampler.timestamps.size(); i++) //Loop through sampler's timestamps to find next keyframe to animate
     {
         if (sampler.timestamps[i] > animationTimer)
         {
