@@ -503,6 +503,7 @@ void DX11Renderer::dragIMGUIdraw()
 
     ImGui::SliderFloat("Roughness", &matProp.Roughness, 0.0f, 1.0f);
     ImGui::SliderFloat("Metallic", &matProp.Metallic, 0.0f, 1.0f);
+	ImGui::ColorEdit3("Colour", &matProp.BaseColor.x);
 	ImGui::RadioButton("IBL 0", &matProp.IBLType, 0); ImGui::SameLine();
     ImGui::RadioButton("IBL 1", &matProp.IBLType, 1); ImGui::SameLine();
     ImGui::RadioButton("IBL 2", &matProp.IBLType, 2);

@@ -67,8 +67,8 @@ public:
 	SceneGraph m_sceneSunBox;
 	SceneGraph m_scenePlanetBox;
 	SceneGraph m_sceneobject3;
-	DirectX::XMFLOAT3 m_startPos = { -3.0f, 0.0f, 0.0f };
-	DirectX::XMFLOAT3 m_endPos = { 3.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_startPos = { 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_endPos = { 0.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT4 m_startRot;
 	DirectX::XMFLOAT4 m_endRot;
 	float m_t = 0.0f;

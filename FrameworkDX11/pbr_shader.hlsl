@@ -14,6 +14,8 @@ cbuffer ConstantBufferMaterials : register(b2)
     float roughnessBuffer;
     float metallicBuffer;
     int IBLTypeBuffer;
+    float materialPadding;
+    float4 baseColor;
 }
 
 Texture2D albedoMap : register(t0);
@@ -216,7 +218,7 @@ float4 PS_PBR(PS_INPUT IN) : SV_TARGET
     float3 GroundColour = float3(0.1, 0.05, 0);
     float ao = aoMap.Sample(samLinear, IN.Tex);
     float3 ambient = float3(0.01, 0.01, 0.01) * albedo * ao;
-    albedo = float3(1.0, 0.78, 0.34); // gold
+    albedo = baseColor.rgb;
     //albedo = float3(1.0, 1.0, 1.0); // white
     metallic = metallicBuffer;
     roughness = roughnessBuffer;

@@ -22,11 +22,12 @@ struct ConstantBuffer
 
 struct ConstantBufferMaterials 
 {
-	ConstantBufferMaterials(): Roughness(0.1f), Metallic(0.9f), IBLType(2) {}
+	ConstantBufferMaterials(): Roughness(0.1f), Metallic(0.9f), IBLType(2), BaseColor(1.0f, 0.78f, 0.34f, 1.0f) {}
 	float Roughness;
 	float Metallic;
 	int IBLType;
 	float Padding; // Padding to make size a multiple of 16 bytes
+	DirectX::XMFLOAT4 BaseColor;
 };
 
 
